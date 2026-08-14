@@ -101,9 +101,47 @@ if [ -z "$ASSET" ]; then
   download_dir=$(/usr/bin/mktemp -d "${TMPDIR:-/tmp}/flagos-download.XXXXXX")
   trap '/bin/rm -rf -- "$download_dir"' EXIT
   archive="flagos-runtime-$VERSION-darwin-arm64-m5pro.tar.gz"
-  CURL_ARGS=(--fail --location --retry 3 --connect-timeout 20 --max-time 1800)
-  /usr/bin/curl "${CURL_ARGS[@]}" "$RELEASE_BASE/$archive" -o "$download_dir/$archive"
+  parts_manifest="$archive.parts"
+  CURL_ARGS=(--fail --location --silent --show-error --retry 3 --connect-timeout 20 --max-time 1800)
   /usr/bin/curl "${CURL_ARGS[@]}" "$RELEASE_BASE/$archive.sha256" -o "$download_dir/$archive.sha256"
+  /usr/bin/curl "${CURL_ARGS[@]}" "$RELEASE_BASE/$parts_manifest" -o "$download_dir/$parts_manifest"
+
+  parts=()
+  while read -r digest part extra; do
+    [ -z "${extra:-}" ] || { echo "Invalid Runtime part manifest entry" >&2; exit 2; }
+    case "$digest" in
+      ""|*[!0-9A-Fa-f]*) echo "Invalid Runtime part digest" >&2; exit 2 ;;
+    esac
+    [ "${#digest}" -eq 64 ] || { echo "Invalid Runtime part digest" >&2; exit 2; }
+    expected_part=$(/usr/bin/printf '%s.part-%03d' "$archive" "${#parts[@]}")
+    [ "$part" = "$expected_part" ] || {
+      echo "Unexpected Runtime part: $part" >&2
+      exit 2
+    }
+    parts+=("$part")
+  done < "$download_dir/$parts_manifest"
+  [ "${#parts[@]}" -gt 0 ] || { echo "Runtime part manifest is empty" >&2; exit 2; }
+
+  pids=()
+  for part in "${parts[@]}"; do
+    /usr/bin/curl "${CURL_ARGS[@]}" "$RELEASE_BASE/$part" -o "$download_dir/$part" &
+    pids+=("$!")
+    if [ "${#pids[@]}" -eq 4 ]; then
+      status=0
+      for pid in "${pids[@]}"; do wait "$pid" || status=1; done
+      [ "$status" -eq 0 ] || { echo "Runtime part download failed" >&2; exit 2; }
+      pids=()
+    fi
+  done
+  status=0
+  for pid in "${pids[@]}"; do wait "$pid" || status=1; done
+  [ "$status" -eq 0 ] || { echo "Runtime part download failed" >&2; exit 2; }
+
+  (cd "$download_dir" && /usr/bin/shasum -a 256 -c "$parts_manifest")
+  : > "$download_dir/$archive"
+  for part in "${parts[@]}"; do
+    /bin/cat "$download_dir/$part" >> "$download_dir/$archive"
+  done
   (cd "$download_dir" && /usr/bin/shasum -a 256 -c "$archive.sha256")
   ASSET="$download_dir/$archive"
 else

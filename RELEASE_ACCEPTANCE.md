@@ -25,9 +25,9 @@ Runtime; no Docker or Metal path is used.
 
 | Asset | Size | SHA256 |
 | --- | ---: | --- |
-| `flagos-runtime-0.1.0-alpha.1-darwin-arm64-m5pro.tar.gz` | 432.0 MiB | `f811f14295e24a305c1296225707059891df958e229a964a1e6c117a76e37bbe` |
+| Runtime logical archive (9 checksummed Release parts) | 432.0 MiB | `f811f14295e24a305c1296225707059891df958e229a964a1e6c117a76e37bbe` |
 | `flagos-wheelhouse-0.1.0-alpha.1-cp311-darwin-arm64.tar.gz` | 81.1 MiB | `876f251951f996ca87c16a41e135a0be2e9add08bf86bc24936bacc6507c03d7` |
-| `install.sh` | 4.9 KiB | `95509229dad1f4882dc70179d7b3ed7562637d61be0155d067039eea5211d7f6` |
+| `install.sh` | 6.3 KiB | `719c4fa149820908dde8d9901890e5cc23f6bfd96721a8fc44103aa533e5b22b` |
 
 Archive verification checked 39,253 Runtime files, 38,186 text files for host
 path relocation, 333 Mach-O images, safe archive paths, source provenance and

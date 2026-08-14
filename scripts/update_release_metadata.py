@@ -17,6 +17,8 @@ WHEELHOUSE_ASSET = (
     / "artifacts"
     / f"flagos-wheelhouse-{VERSION}-cp311-darwin-arm64.tar.gz"
 )
+RUNTIME_PART_SIZE = 50 * 1024 * 1024
+RUNTIME_PARTS_MANIFEST = Path(str(RUNTIME_ASSET) + ".parts")
 
 
 def sha256(path: Path) -> str:
@@ -25,6 +27,26 @@ def sha256(path: Path) -> str:
         for chunk in iter(lambda: stream.read(8 * 1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def split_runtime() -> list[Path]:
+    for stale in RUNTIME_ASSET.parent.glob(RUNTIME_ASSET.name + ".part-*"):
+        stale.unlink()
+
+    parts: list[Path] = []
+    with RUNTIME_ASSET.open("rb") as source:
+        index = 0
+        while chunk := source.read(RUNTIME_PART_SIZE):
+            part = Path(f"{RUNTIME_ASSET}.part-{index:03d}")
+            part.write_bytes(chunk)
+            parts.append(part)
+            index += 1
+
+    manifest_lines = [f"{sha256(part)}  {part.name}" for part in parts]
+    RUNTIME_PARTS_MANIFEST.write_text(
+        "\n".join(manifest_lines) + "\n", encoding="utf-8"
+    )
+    return parts
 
 
 def main() -> int:
@@ -44,8 +66,10 @@ def main() -> int:
         f"{installer_digest}  install.sh\n", encoding="utf-8"
     )
 
+    runtime_parts = split_runtime()
     checksummed = [
-        (RUNTIME_ASSET, RUNTIME_ASSET.name),
+        (RUNTIME_PARTS_MANIFEST, RUNTIME_PARTS_MANIFEST.name),
+        *((part, part.name) for part in runtime_parts),
         (WHEELHOUSE_ASSET, WHEELHOUSE_ASSET.name),
         (ROOT / "install.sh", "install.sh"),
         (ROOT / "runtime-manifest.json", "runtime-manifest.json"),

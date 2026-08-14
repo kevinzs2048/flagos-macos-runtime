@@ -20,6 +20,7 @@ RUNTIME_ASSET = ROOT / "artifacts" / f"{RUNTIME_NAME}.tar.gz"
 WHEELHOUSE_ASSET = (
     ROOT / "artifacts" / f"flagos-wheelhouse-{VERSION}-cp311-darwin-arm64.tar.gz"
 )
+RUNTIME_PARTS_MANIFEST = Path(str(RUNTIME_ASSET) + ".parts")
 
 
 def sha256(path: Path) -> str:
@@ -35,6 +36,31 @@ def check_sidecar(asset: Path) -> None:
     fields = sidecar.read_text(encoding="utf-8").split()
     if len(fields) < 2 or fields[0] != sha256(asset) or fields[1] != asset.name:
         raise RuntimeError(f"invalid checksum sidecar: {sidecar}")
+
+
+def verify_runtime_parts() -> list[Path]:
+    lines = RUNTIME_PARTS_MANIFEST.read_text(encoding="utf-8").splitlines()
+    if not lines:
+        raise RuntimeError("Runtime parts manifest is empty")
+
+    parts: list[Path] = []
+    combined = hashlib.sha256()
+    for index, line in enumerate(lines):
+        fields = line.split()
+        expected_name = f"{RUNTIME_ASSET.name}.part-{index:03d}"
+        if len(fields) != 2 or fields[1] != expected_name:
+            raise RuntimeError(f"invalid Runtime part entry: {line}")
+        part = RUNTIME_ASSET.parent / expected_name
+        if not part.is_file() or sha256(part) != fields[0]:
+            raise RuntimeError(f"invalid Runtime part: {part}")
+        with part.open("rb") as stream:
+            for chunk in iter(lambda: stream.read(8 * 1024 * 1024), b""):
+                combined.update(chunk)
+        parts.append(part)
+
+    if combined.hexdigest() != sha256(RUNTIME_ASSET):
+        raise RuntimeError("Runtime parts do not reconstruct the validated archive")
+    return parts
 
 
 def normalized_member(parts: tuple[str, ...]) -> tuple[str, ...]:
@@ -279,12 +305,14 @@ def main() -> int:
             archive.extractall(temp)
         wheel_count = verify_wheelhouse(temp / WHEELHOUSE_NAME)
 
+    runtime_parts = verify_runtime_parts()
     release_sums = {}
     for line in (ROOT / "SHA256SUMS").read_text(encoding="utf-8").splitlines():
         digest, relative = line.split(None, 1)
         release_sums[relative] = digest
     release_files = {
-        RUNTIME_ASSET.name: RUNTIME_ASSET,
+        RUNTIME_PARTS_MANIFEST.name: RUNTIME_PARTS_MANIFEST,
+        **{part.name: part for part in runtime_parts},
         WHEELHOUSE_ASSET.name: WHEELHOUSE_ASSET,
         "install.sh": ROOT / "install.sh",
         "runtime-manifest.json": ROOT / "runtime-manifest.json",

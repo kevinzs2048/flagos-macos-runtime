@@ -34,7 +34,9 @@ export PATH="$HOME/Library/Application Support/FlagOS/current/bin:$PATH"
 
 The installer uses no `sudo`. It verifies the archive checksum, platform,
 required Arm features and the packaged vLLM import before activating the
-Runtime.
+Runtime. The prebuilt Runtime is downloaded as independently checksummed
+50 MiB parts (four downloads at a time) and reconstructed transparently; this
+avoids unreliable long-lived GitHub upload/download connections.
 
 ## Run Qwen3.8-27B
 
@@ -88,7 +90,8 @@ export FLAGOS_LIBOMP_ROOT=/path/to/relocatable-libomp
 The build produces:
 
 - `artifacts/flagos-runtime-0.1.0-alpha.1-darwin-arm64-m5pro.tar.gz` —
-  self-contained end-user Runtime.
+  validated self-contained end-user Runtime; Release metadata also produces
+  its 50 MiB transport parts and parts manifest.
 - `artifacts/flagos-wheelhouse-0.1.0-alpha.1-cp311-darwin-arm64.tar.gz` —
   four component wheels for developers.
 - SHA256 sidecars and `SHA256SUMS`.
