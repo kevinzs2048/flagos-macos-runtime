@@ -21,20 +21,15 @@ Runtime; no Docker or Metal path is used.
   release verification is performed directly by the build scripts. Formal
   libtriton_jit CTest: 7 passed. Relevant vLLM-Plugin-FL tests: 11 passed.
 
-## Last fully validated candidate assets
-
-These hashes record the last full Runtime build from the same five engine
-commits. The later repository-only source-materialization cleanup was
-intentionally validated without rebuilding the 432 MiB Runtime; the release
-job regenerates these assets and their provenance metadata before publication.
+## Validated release assets
 
 | Asset | Size | SHA256 |
 | --- | ---: | --- |
-| `flagos-runtime-0.1.0-alpha.1-darwin-arm64-m5pro.tar.gz` | 432 MiB | `ffe5b52a4cc3affca25f78c406f4d2b2fd8d3958c841b18ab6fe8c593244c55f` |
-| `flagos-wheelhouse-0.1.0-alpha.1-cp311-darwin-arm64.tar.gz` | 81.2 MiB | `fe58fa7bb47d9fa96f9278c9cbebe3f7f94a8681587eb0a063645caecaa4d30f` |
+| `flagos-runtime-0.1.0-alpha.1-darwin-arm64-m5pro.tar.gz` | 432.0 MiB | `f811f14295e24a305c1296225707059891df958e229a964a1e6c117a76e37bbe` |
+| `flagos-wheelhouse-0.1.0-alpha.1-cp311-darwin-arm64.tar.gz` | 81.1 MiB | `876f251951f996ca87c16a41e135a0be2e9add08bf86bc24936bacc6507c03d7` |
 | `install.sh` | 4.9 KiB | `95509229dad1f4882dc70179d7b3ed7562637d61be0155d067039eea5211d7f6` |
 
-Archive verification checked 39,254 Runtime files, 38,187 text files for host
+Archive verification checked 39,253 Runtime files, 38,186 text files for host
 path relocation, 333 Mach-O images, safe archive paths, source provenance and
 all checksum sidecars. The packaged `gen_ssig` and `standalone_compile` JIT
 helpers also passed an import probe. There are no developer absolute load paths
@@ -57,7 +52,7 @@ W8A8. Vision/MTP remain outside the text-only Runtime path.
 Real OpenAI-compatible chat HTTP smoke results are stored in
 `benchmarks/qwen38-g128-runtime-correctness.json`. All five fixed cases passed:
 Chinese, English, arithmetic (42), Python code and thinking-mode arithmetic
-(91). The final rebuilt Runtime separately passed all 39,260 embedded file
+(91). The release Runtime separately passed all 39,253 embedded file
 hashes and all nine required native operator registrations. It then loaded the
 model, completed warmup and returned a correct response through the real
 `/v1/completions` HTTP endpoint. The local model
@@ -110,4 +105,5 @@ Runtime hashes and direct native-op registration checks.
 - The alpha is not Developer ID signed or notarized.
 - Python/Torch and the compiled vLLM/Triton compiler extensions come from the
   validated build environment rather than a fully hermetic CI rebuild.
-- The final external model repository/revision is reserved but was not uploaded.
+- The external model repository ID is intentionally maintained by the model
+  publication and is not embedded in this Runtime.
