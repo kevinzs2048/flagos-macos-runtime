@@ -283,8 +283,17 @@ def main() -> int:
     for line in (ROOT / "SHA256SUMS").read_text(encoding="utf-8").splitlines():
         digest, relative = line.split(None, 1)
         release_sums[relative] = digest
+    release_files = {
+        RUNTIME_ASSET.name: RUNTIME_ASSET,
+        WHEELHOUSE_ASSET.name: WHEELHOUSE_ASSET,
+        "install.sh": ROOT / "install.sh",
+        "runtime-manifest.json": ROOT / "runtime-manifest.json",
+        "sources.lock.json": ROOT / "sources.lock.json",
+    }
+    if set(release_sums) != set(release_files):
+        raise RuntimeError("root SHA256SUMS has an unexpected Release file set")
     for relative, expected in release_sums.items():
-        if sha256(ROOT / relative) != expected:
+        if sha256(release_files[relative]) != expected:
             raise RuntimeError(f"root SHA256SUMS mismatch: {relative}")
 
     print(

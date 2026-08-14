@@ -45,13 +45,13 @@ def main() -> int:
     )
 
     checksummed = [
-        RUNTIME_ASSET,
-        WHEELHOUSE_ASSET,
-        ROOT / "install.sh",
-        ROOT / "runtime-manifest.json",
-        ROOT / "sources.lock.json",
+        (RUNTIME_ASSET, RUNTIME_ASSET.name),
+        (WHEELHOUSE_ASSET, WHEELHOUSE_ASSET.name),
+        (ROOT / "install.sh", "install.sh"),
+        (ROOT / "runtime-manifest.json", "runtime-manifest.json"),
+        (ROOT / "sources.lock.json", "sources.lock.json"),
     ]
-    lines = [f"{sha256(path)}  {path.relative_to(ROOT)}" for path in checksummed]
+    lines = [f"{sha256(path)}  {release_name}" for path, release_name in checksummed]
     (ROOT / "SHA256SUMS").write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"updated release metadata for {VERSION}")
     return 0
