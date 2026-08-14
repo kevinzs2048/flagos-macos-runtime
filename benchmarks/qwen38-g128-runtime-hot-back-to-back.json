@@ -1,0 +1,350 @@
+{
+  "acceptance": {
+    "coverage_pass": true,
+    "decode_minimum": 12.100671912356104,
+    "decode_pass": true,
+    "pass": true,
+    "prefill_minimum": 57.79725669308168,
+    "prefill_pass": true
+  },
+  "baseline": {
+    "median_decode_tokens_per_second": 12.474919497274334,
+    "median_prefill_e2e_tokens_per_second": 59.58480071451719,
+    "median_total_seconds": 18.773269292,
+    "median_ttft_seconds": 8.592795375,
+    "source_sha256": "c2facc6bbb9f4e90ae2a67c2d5d9decd862f7086e3f10922d7f3f70097212498"
+  },
+  "batch_size": 1,
+  "coverage_file": "FlagOS-logs/kernel-coverage-20260814-205534.json",
+  "decode_tokens": 128,
+  "finished_at_unix": 1786712364.2721689,
+  "kernel_coverage": {
+    "checks": {
+      "cpu_attention_backend": true,
+      "gdn_decode": true,
+      "gdn_fallback_zero": true,
+      "gdn_prefill": true,
+      "prepared_g128_linears": true,
+      "prepared_w8_lm_head": true,
+      "q4_g128_decode": true,
+      "q4_g128_prefill": true,
+      "w8_lm_head": true
+    },
+    "errors": [],
+    "fallback_counters": {
+      "attention": 0,
+      "gdn_decode": 0,
+      "gdn_fallback": 0,
+      "gdn_prefill": 0,
+      "q4_body": 0,
+      "w8_lm_head": 0
+    },
+    "ok": true,
+    "path": "FlagOS-logs/kernel-coverage-20260814-205534.json",
+    "report": {
+      "attention_backend": "CPUAttentionBackend",
+      "attention_backends_observed": [
+        "CPUAttentionBackend",
+        "GDNAttentionBackend"
+      ],
+      "captured_at_unix": 1786712308.047114,
+      "fallback_allowed": false,
+      "gdn_route_stats": {
+        "native_conv_prefill": 48,
+        "native_fast_forward": 48,
+        "native_gdn_prefill": 48
+      },
+      "phases": {
+        "decode": {
+          "kernels": [
+            {
+              "calls": 1,
+              "elapsed_ns": 1375,
+              "key": "_pack_lhs_qai8dxp_bf16_kernel@1x1x1"
+            },
+            {
+              "calls": 64,
+              "elapsed_ns": 13315910,
+              "key": "_q4_decode_asym_g128_kai_shared_sdot_kernel@1x14x1"
+            },
+            {
+              "calls": 64,
+              "elapsed_ns": 5440667,
+              "key": "_q4_fused_decode_asym_g128_kai_sdot_kernel@1x14x1"
+            },
+            {
+              "calls": 48,
+              "elapsed_ns": 322877,
+              "key": "_q4_fused_decode_asym_g128_kai_sdot_kernel@1x1x1"
+            },
+            {
+              "calls": 128,
+              "elapsed_ns": 36402337,
+              "key": "_q4_fused_decode_asym_g128_stealing_kai_sdot_kernel@1x14x1"
+            },
+            {
+              "calls": 64,
+              "elapsed_ns": 820625,
+              "key": "_q4_pack_swiglu_asym_kai_kernel@1x1x1"
+            },
+            {
+              "calls": 1,
+              "elapsed_ns": 5173458,
+              "key": "_w8_qai8dxp_decode_stealing_sdot_kernel@14x1x1"
+            }
+          ],
+          "scheduled_tokens": 1
+        },
+        "prefill": {
+          "kernels": [
+            {
+              "calls": 48,
+              "elapsed_ns": 5545126,
+              "key": "_gdn_conv1d_prefill_width4_bf16_kernel@160x1x1"
+            },
+            {
+              "calls": 240,
+              "elapsed_ns": 5679719,
+              "key": "_pack_lhs_qai8dxp_asym_panel4_kernel@2x1x1"
+            },
+            {
+              "calls": 1,
+              "elapsed_ns": 2708,
+              "key": "_pack_lhs_qai8dxp_bf16_kernel@1x1x1"
+            },
+            {
+              "calls": 64,
+              "elapsed_ns": 7566958,
+              "key": "_q4_pack_swiglu_asym_panel4_kai_kernel@2x1x1"
+            },
+            {
+              "calls": 128,
+              "elapsed_ns": 41549954,
+              "key": "_q4_prefill_asym_g128_i8mm_kernel@1x1280x1"
+            },
+            {
+              "calls": 48,
+              "elapsed_ns": 2507710,
+              "key": "_q4_prefill_asym_g128_i8mm_kernel@1x24x1"
+            },
+            {
+              "calls": 16,
+              "elapsed_ns": 8727126,
+              "key": "_q4_prefill_asym_g128_i8mm_kernel@1x3584x1"
+            },
+            {
+              "calls": 48,
+              "elapsed_ns": 24994501,
+              "key": "_q4_prefill_asym_g128_i8mm_kernel@1x4096x1"
+            },
+            {
+              "calls": 64,
+              "elapsed_ns": 59046916,
+              "key": "_q4_prefill_asym_g128_i8mm_kernel@1x8704x1"
+            },
+            {
+              "calls": 1,
+              "elapsed_ns": 5137833,
+              "key": "_w8_qai8dxp_decode_stealing_sdot_kernel@14x1x1"
+            }
+          ],
+          "scheduled_tokens": 8
+        }
+      },
+      "pid": 58991,
+      "platform": {
+        "machine": "arm64",
+        "macos": "26.5.1"
+      },
+      "route_stats": {
+        "codegen_prefill_calls": 0,
+        "decode_codegen_calls": 0,
+        "decode_programs": 0,
+        "fused_add_rmsnorm_decode_calls": 0,
+        "fused_add_rmsnorm_decode_programs": 0,
+        "fused_decode_calls": 0,
+        "fused_decode_programs": 0,
+        "fused_rmsnorm_decode_calls": 0,
+        "fused_rmsnorm_decode_programs": 0,
+        "fused_rmsnorm_qk_norm_decode_calls": 0,
+        "fused_rmsnorm_qk_norm_decode_programs": 0,
+        "legacy_row_pack_calls": 0,
+        "m16_main_launches": 0,
+        "m8_split_main_launches": 0,
+        "panel4_pack_calls": 0,
+        "panel4_tail_pack_calls": 0,
+        "prepared_g128_linears": 304,
+        "prepared_g32_linears": 0,
+        "prepared_linears": 1,
+        "prepared_online_w8_linears": 1,
+        "prepared_q4_lm_heads": 0,
+        "prepared_w8_linears": 0,
+        "prepared_w8_lm_heads": 1,
+        "tail_m12_launches": 0,
+        "tail_m16_launches": 0,
+        "tail_m4_launches": 0,
+        "tail_m8_launches": 0,
+        "tail_m8_split_launches": 0
+      },
+      "schema_version": 1,
+      "strict": true
+    }
+  },
+  "median_decode_tokens_per_second": 12.76243948987776,
+  "median_decode_tpot_seconds": 0.07835492585826771,
+  "median_prefill_e2e_tokens_per_second": 59.46702763130758,
+  "median_request_output_tokens_per_second": 6.878809679543394,
+  "median_total_seconds": 18.607870542,
+  "median_ttft_seconds": 8.609813209,
+  "model": {
+    "metadata_sha256": {
+      "config.json": "71c90079f670b524736815a7e2f4f53c9f00b92e14214284398c548e64bc1ad7",
+      "model.safetensors.index.json": "142cb31670ad6f3d641406c08a5ca0357251265a3e4a1ae3894c59b6b9dd9d26",
+      "qwen38_w4a8_gptq_packed_manifest.json": "785733fb737f4c45028892d594108b71bb14c25a6b86975b8baa8b0dc5b4d354"
+    },
+    "validation": {
+      "architecture": "Qwen3_5ForConditionalGeneration",
+      "body_packed_linears": 496,
+      "checkpoint_language_model_only": false,
+      "errors": [],
+      "model_type": "qwen3_5",
+      "ok": true,
+      "path": "Qwen3.8-27B-W4A8-GPTQ-G128-packed",
+      "quantization": {
+        "activation_bits": 8,
+        "activation_dynamic": true,
+        "activation_strategy": "token",
+        "activation_symmetric": true,
+        "format": "pack-quantized",
+        "weight_bits": 4,
+        "weight_group_size": 128,
+        "weight_symmetric": true
+      },
+      "quantization_manifest": "qwen38_w4a8_gptq_packed_manifest.json",
+      "shard_bytes": 18568386376,
+      "shard_count": 9,
+      "text_only_runtime": true,
+      "warnings": [
+        "flagos-runtime.json is absent; using config/quantization validation only"
+      ]
+    }
+  },
+  "model_path": "Qwen3.8-27B-W4A8-GPTQ-G128-packed",
+  "platform": {
+    "machine": "arm64",
+    "platform": "macOS-26.5.1-arm64-arm-64bit",
+    "python": "3.11.9",
+    "runtime_abi": "flagos-arm-w4a8-g128-v1",
+    "runtime_version": "0.1.0-alpha.1"
+  },
+  "preflight": {
+    "comparable": true,
+    "competing_vllm": [],
+    "load_average": [
+      3.4072265625,
+      4.59912109375,
+      4.5087890625
+    ],
+    "memory_free_percent": 93,
+    "reason": null
+  },
+  "prompt_tokens": 512,
+  "protocol": "qwen-27b-w4a8-g128-b1-openai-http-stream-v1",
+  "repeats": 3,
+  "runtime": {
+    "abi": "flagos-arm-w4a8-g128-v1",
+    "manifest": {
+      "abi": "flagos-arm-w4a8-g128-v1",
+      "flag_gems": "5.0.2",
+      "model_download_repo": "FlagRelease/Qwen3.8-27B-W4A8-G128-HeadBF16-Packed-FlagOS-Mac",
+      "model_weights_included": false,
+      "name": "flagos-macos-runtime",
+      "platform": "darwin-arm64",
+      "plugin": "0.0.0+g2ccd0485a",
+      "profile": "mac17_9-m5pro-64g",
+      "python": "3.11.9",
+      "schema_version": 1,
+      "source_provenance": {
+        "lock_sha256": "9437c0239985d9b2f557495adbe1bc0cf0fbdeb4e70c45921937dd1815688612",
+        "snapshot_manifest_sha256": "bb0c09964ded434bbd5f1a4ab4ec0eb592281b961e84362f8c64b608fc1db19a"
+      },
+      "torch": "2.11.0",
+      "triton": "3.7.2",
+      "unsigned_developer_candidate": true,
+      "version": "0.1.0-alpha.1",
+      "vllm": "0.20.2+cpu"
+    },
+    "version": "0.1.0-alpha.1"
+  },
+  "runtime_environment": {
+    "FLAGGEMS_ARM_Q4_STRICT": "1",
+    "FLAGGEMS_GDN_PREFILL_THREADS": "16",
+    "FLAGGEMS_GDN_TRITON_THREADS": "14",
+    "FLAGGEMS_Q4_PREFILL_THREADS": "18",
+    "KMP_BLOCKTIME": "20",
+    "OMP_NUM_THREADS": "14",
+    "TRITON_JIT_CPU_DYNAMIC_KERNEL": "_q4_prefill_asym_g128_i8mm_kernel",
+    "VLLM_CPU_KVCACHE_SPACE": "2",
+    "VLLM_CPU_OMP_THREADS_BIND": "0"
+  },
+  "samples": [
+    {
+      "content_chunks": 128,
+      "decode_tokens_per_second": 12.873830071064772,
+      "decode_tpot_seconds": 0.07767696128346455,
+      "last_content_seconds": 18.036025041,
+      "output_tokens": 128,
+      "prefill_e2e_tokens_per_second": 62.66023827678104,
+      "prompt_tokens": 512,
+      "repeat": 0,
+      "request_output_tokens_per_second": 7.0968930772386205,
+      "total_seconds": 18.0360615,
+      "ttft_seconds": 8.171050958,
+      "usage": {
+        "completion_tokens": 128,
+        "prompt_tokens": 512,
+        "total_tokens": 640
+      }
+    },
+    {
+      "content_chunks": 128,
+      "decode_tokens_per_second": 12.702532090990687,
+      "decode_tpot_seconds": 0.07872446161417324,
+      "last_content_seconds": 18.607819834,
+      "output_tokens": 128,
+      "prefill_e2e_tokens_per_second": 59.46702763130758,
+      "prompt_tokens": 512,
+      "repeat": 1,
+      "request_output_tokens_per_second": 6.878809679543394,
+      "total_seconds": 18.607870542,
+      "ttft_seconds": 8.609813209,
+      "usage": {
+        "completion_tokens": 128,
+        "prompt_tokens": 512,
+        "total_tokens": 640
+      }
+    },
+    {
+      "content_chunks": 128,
+      "decode_tokens_per_second": 12.76243948987776,
+      "decode_tpot_seconds": 0.07835492585826771,
+      "last_content_seconds": 18.62508575,
+      "output_tokens": 128,
+      "prefill_e2e_tokens_per_second": 59.02690799313504,
+      "prompt_tokens": 512,
+      "repeat": 2,
+      "request_output_tokens_per_second": 6.8724357601584085,
+      "total_seconds": 18.625128625,
+      "ttft_seconds": 8.674010166,
+      "usage": {
+        "completion_tokens": 128,
+        "prompt_tokens": 512,
+        "total_tokens": 640
+      }
+    }
+  ],
+  "schema_version": 1,
+  "served_model": "qwen-w4a8-g128",
+  "server_log": "FlagOS-logs/serve-bench-20260814-205534.log",
+  "started_at_unix": 1786712134.552153
+}

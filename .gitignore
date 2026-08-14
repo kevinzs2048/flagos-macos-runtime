@@ -1,0 +1,10 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+build/*
+artifacts/*
+SHA256SUMS
+install.sh.sha256
+*.log

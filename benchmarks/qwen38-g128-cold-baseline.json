@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "protocol": "qwen-27b-w4a8-g128-b1-openai-http-stream-v1",
+  "model_path": "Qwen3.8-27B-W4A8-GPTQ-G128-packed",
+  "served_model": "qwen38",
+  "batch_size": 1,
+  "prompt_tokens": 512,
+  "decode_tokens": 128,
+  "samples": [
+    {
+      "prefill_e2e_tokens_per_second": 70.74922025152902,
+      "decode_tokens_per_second": 13.269692675779567,
+      "ttft_seconds": 7.236828875,
+      "total_seconds": 16.807570209
+    },
+    {
+      "prefill_e2e_tokens_per_second": 76.0234757832397,
+      "decode_tokens_per_second": 13.207175229974306,
+      "ttft_seconds": 6.734761792,
+      "total_seconds": 16.350791459
+    },
+    {
+      "prefill_e2e_tokens_per_second": 75.66467520138075,
+      "decode_tokens_per_second": 13.159952285565163,
+      "ttft_seconds": 6.766697916,
+      "total_seconds": 16.417237791
+    }
+  ],
+  "median_prefill_e2e_tokens_per_second": 75.66467520138075,
+  "median_decode_tokens_per_second": 13.207175229974306,
+  "median_ttft_seconds": 6.766697916,
+  "median_total_seconds": 16.417237791,
+  "source_sha256": "a5d1a049725b2b1fabf2bc2a9b605f7c832b2121a92caeb12bfd9a67d0f2d572",
+  "source_files": [
+    "/tmp/qwen38_cooled_http_round1.jsonl",
+    "/tmp/qwen38_cooled_http_round2.jsonl",
+    "/tmp/qwen38_cooled_http_round3.jsonl"
+  ]
+}

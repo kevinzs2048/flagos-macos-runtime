@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "name": "flagos-macos-runtime",
+  "version": "0.1.0-alpha.1",
+  "abi": "flagos-arm-w4a8-g128-v1",
+  "platform": "darwin-arm64",
+  "profile": "mac17_9-m5pro-64g",
+  "python": "3.11.9",
+  "torch": "2.11.0",
+  "vllm": "0.20.2+cpu",
+  "triton": "3.7.2",
+  "flag_gems": "5.0.2",
+  "plugin": "0.0.0+g2ccd0485a",
+  "source_provenance": {
+    "lock_sha256": "456604a3e4592462b83f0b9ceb36e25c21d8e4c6971e04cb3d8fb12a59e36424"
+  },
+  "unsigned_developer_candidate": true,
+  "model_weights_included": false,
+  "model_download_repo": "FlagRelease/Qwen3.8-27B-W4A8-G128-HeadBF16-Packed-FlagOS-Mac"
+}

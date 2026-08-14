@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "locked_at": "2026-08-14T22:34:10+08:00",
+  "runtime_version": "0.1.0-alpha.1",
+  "runtime_abi": "flagos-arm-w4a8-g128-v1",
+  "source_policy": "materialize_exact_git_commits_at_build_time",
+  "components": {
+    "vllm": {
+      "url": "https://github.com/vllm-project/vllm.git",
+      "version": "0.20.2+cpu",
+      "commit": "bc150f50299199599673614f80d12a196f377655",
+      "tree": "e4274765c4046780b073082772d6b90d1a2f9c45",
+      "tag": "v0.20.2"
+    },
+    "triton_cpu": {
+      "url": "https://github.com/kevinzs2048/triton-cpu.git",
+      "version": "3.7.2",
+      "branch": "macos-arm-w4a8",
+      "commit": "bdada74ae02d62819ad6d6d7ea54f3a927b9e45c",
+      "tree": "fa8c5b0291b754e4ffbff80e548b5e8eaeb1aacd"
+    },
+    "flag_gems": {
+      "url": "https://github.com/kevinzs2048/FlagGems.git",
+      "version": "5.0.2",
+      "branch": "macos-arm-w4a8",
+      "commit": "2be6879c1d673aaa0beb0a67dc24227562e0b8db",
+      "tree": "33e5afc3910be90bbd4d853143d1cab471fd5010"
+    },
+    "libtriton_jit": {
+      "url": "https://github.com/kevinzs2048/libtriton_jit.git",
+      "version": "0.1.0",
+      "branch": "macos-arm-w4a8",
+      "commit": "a4eb4db996a63afe281f6ac6418182c63105d73a",
+      "tree": "97801a1f12fc2137796ff5a17a3f351a89d6a848"
+    },
+    "vllm_plugin_fl": {
+      "url": "https://github.com/kevinzs2048/vllm-plugin-FL.git",
+      "version": "0.0.0+g2ccd0485a",
+      "branch": "macos-arm-w4a8",
+      "commit": "2ccd0485ae4faba007ad0562fc00e776d67c2eed",
+      "tree": "4aee5b5f252f3121dd972f47915746064227a588"
+    }
+  },
+  "toolchain": {
+    "macos": "26.5.1 (25F80)",
+    "sdk": "26.5",
+    "sdk_path": "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
+    "clang": "Apple clang 21.0.0",
+    "architecture": "arm64",
+    "python": "3.11.9",
+    "torch": "2.11.0",
+    "cmake": "4.4.2",
+    "build_type": "Release"
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "model_path": "Qwen3.8-27B-W4A8-GPTQ-G128-packed",
+  "runtime": "0.1.0-alpha.1",
+  "runtime_asset_sha256": "69d3dd7e2d61755bb0a1036b5885260c54ecc32335bad3718a54d10e3dc6dfca",
+  "protocol": "real-vllm-openai-http-b1-pp512-tg128-loaded-server-cooled-single-shot",
+  "server_arguments": [
+    "--distributed-executor-backend=uni",
+    "--disable-log-stats"
+  ],
+  "samples": [
+    {
+      "cooldown_seconds": 135,
+      "prefill_e2e_tokens_per_second": 70.53218189434348,
+      "decode_tokens_per_second": 12.987824034721323,
+      "ttft_seconds": 7.259097709,
+      "total_seconds": 17.037540334
+    },
+    {
+      "cooldown_seconds": 90,
+      "prefill_e2e_tokens_per_second": 77.24340708462381,
+      "decode_tokens_per_second": 13.061940549616784,
+      "ttft_seconds": 6.628397417,
+      "total_seconds": 16.351381875
+    }
+  ],
+  "historical_cold_prefill_median": 75.66467520138075,
+  "historical_cold_prefill_best": 76.0234757832397,
+  "current_best_prefill": 77.24340708462381,
+  "current_best_vs_historical_best_percent": 1.6046762946535744,
+  "conclusion": "The 59.47 tok/s back-to-back result was a thermally hot benchmark-protocol artifact, not a kernel fallback or packaged-runtime regression."
+}
