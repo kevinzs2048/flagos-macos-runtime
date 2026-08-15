@@ -18,7 +18,7 @@ trap cleanup EXIT
 [ -f "$ASSET.sha256" ] || { echo "Runtime checksum is missing" >&2; exit 2; }
 
 export HOME="$TEST_ROOT/home"
-export FLAGOS_INSTALL_ROOT="$TEST_ROOT/Application Support/FlagOS"
+export FLAGOS_INSTALL_ROOT="$TEST_ROOT/FlagOS"
 /bin/mkdir -p "$HOME"
 
 /bin/bash "$ROOT/install.sh" --asset "$ASSET"
@@ -52,5 +52,15 @@ then
 fi
 /usr/bin/grep -q "Checksum sidecar is missing" \
   "$TEST_ROOT/missing-sidecar.log"
+
+if FLAGOS_INSTALL_ROOT="$TEST_ROOT/Path With Spaces" \
+  /bin/bash "$ROOT/install.sh" --asset "$ASSET" --version 0.1.0-space-test \
+  >"$TEST_ROOT/space-path.log" 2>&1
+then
+  echo "installer accepted a Runtime path containing whitespace" >&2
+  exit 2
+fi
+/usr/bin/grep -q "Runtime install path must not contain whitespace" \
+  "$TEST_ROOT/space-path.log"
 
 echo "Installed standard vLLM workflow: PASS"

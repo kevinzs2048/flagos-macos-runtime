@@ -20,7 +20,7 @@ curl -fLO "$BASE/install.sh.sha256"
 shasum -a 256 -c install.sh.sha256
 bash install.sh
 
-export PATH="$HOME/Library/Application Support/FlagOS/current/bin:$PATH"
+export PATH="$HOME/Library/FlagOS/current/bin:$PATH"
 vllm --version
 ```
 
@@ -29,14 +29,16 @@ For a locally built archive:
 ```bash
 bash install.sh \
   --asset artifacts/flagos-runtime-0.1.0-alpha.1-darwin-arm64-m5pro.tar.gz
-export PATH="$HOME/Library/Application Support/FlagOS/current/bin:$PATH"
+export PATH="$HOME/Library/FlagOS/current/bin:$PATH"
 ```
 
 The installer uses no `sudo`. It verifies the archive checksum, platform,
 required Arm features and the packaged vLLM import before activating the
 Runtime. The prebuilt Runtime is downloaded as independently checksummed
 50 MiB parts (four downloads at a time) and reconstructed transparently; this
-avoids unreliable long-lived GitHub upload/download connections.
+avoids unreliable long-lived GitHub upload/download connections. The default
+install root is `~/Library/FlagOS`; paths containing whitespace are rejected
+because PyTorch Inductor cannot compile its CPU sampler against them.
 
 ## Run Qwen3.8-27B
 
@@ -58,6 +60,7 @@ vllm serve "$MODEL" \
   --language-model-only \
   --limit-mm-per-prompt '{"image":0,"video":0}' \
   --generation-config vllm \
+  --reasoning-parser qwen3 \
   --distributed-executor-backend uni \
   --disable-log-stats
 ```

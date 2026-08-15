@@ -2,7 +2,7 @@
 set -euo pipefail
 
 VERSION=0.1.0-alpha.1
-APP_ROOT=${FLAGOS_INSTALL_ROOT:-"$HOME/Library/Application Support/FlagOS"}
+APP_ROOT=${FLAGOS_INSTALL_ROOT:-"$HOME/Library/FlagOS"}
 ASSET=
 ACTION=install
 TARGET_VERSION=
@@ -44,6 +44,14 @@ else
   case "$TARGET_VERSION" in v*) TARGET_VERSION=${TARGET_VERSION#v} ;; esac
   validate_version "$TARGET_VERSION"
 fi
+
+case "$APP_ROOT" in
+  *[[:space:]]*)
+    echo "Runtime install path must not contain whitespace: $APP_ROOT" >&2
+    echo "PyTorch Inductor cannot compile CPU sampler library paths containing whitespace." >&2
+    exit 2
+    ;;
+esac
 
 RUNTIMES="$APP_ROOT/runtimes"
 CURRENT="$APP_ROOT/current"

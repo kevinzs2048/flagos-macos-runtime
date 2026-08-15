@@ -27,7 +27,7 @@ Runtime; no Docker or Metal path is used.
 | --- | ---: | --- |
 | Runtime logical archive (9 checksummed Release parts) | 432.0 MiB | `f811f14295e24a305c1296225707059891df958e229a964a1e6c117a76e37bbe` |
 | `flagos-wheelhouse-0.1.0-alpha.1-cp311-darwin-arm64.tar.gz` | 81.1 MiB | `876f251951f996ca87c16a41e135a0be2e9add08bf86bc24936bacc6507c03d7` |
-| `install.sh` | 6.3 KiB | `719c4fa149820908dde8d9901890e5cc23f6bfd96721a8fc44103aa533e5b22b` |
+| `install.sh` | 6.6 KiB | `ec3f279b54e70e7a5b7a299eff71cdf55cca6ca414fe235f8ed0a080f02cbc46` |
 
 Archive verification checked 39,253 Runtime files, 38,186 text files for host
 path relocation, 333 Mach-O images, safe archive paths, source provenance and
@@ -41,6 +41,14 @@ The isolated end-user workflow passed install, activation, standard
 `vllm --version`, standard `vllm serve --help`, rollback and active-version
 uninstall protection. All four wheels also installed and imported with
 `pip --no-index --no-deps` in a fresh target directory.
+
+A README-driven deployment audit additionally caught that PyTorch Inductor
+cannot compile its CPU sampler when Runtime library paths contain whitespace.
+The default install root is therefore `~/Library/FlagOS`, and the installer
+rejects whitespace-bearing overrides explicitly. A fresh install at that path
+loaded the full Qwen3.8 checkpoint, completed sampler/model warmup, activated
+the `qwen3` reasoning parser and returned a normal chat completion with
+reasoning and final content separated.
 
 ## Model function and kernel coverage
 
