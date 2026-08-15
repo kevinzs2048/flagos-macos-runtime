@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "locked_at": "2026-08-14T22:34:10+08:00",
+  "locked_at": "2026-08-16T04:51:14+08:00",
   "runtime_version": "0.1.0-alpha.1",
   "runtime_abi": "flagos-arm-w4a8-g128-v1",
   "source_policy": "materialize_exact_git_commits_at_build_time",
@@ -23,8 +23,8 @@
       "url": "https://github.com/kevinzs2048/FlagGems.git",
       "version": "5.0.2",
       "branch": "macos-arm-w4a8",
-      "commit": "2be6879c1d673aaa0beb0a67dc24227562e0b8db",
-      "tree": "33e5afc3910be90bbd4d853143d1cab471fd5010"
+      "commit": "5e50ebcce34effdc6df201681efbacaeb9c4c2c1",
+      "tree": "e0bdf2e705f2fdfdd72783b50486714fa5601f7c"
     },
     "libtriton_jit": {
       "url": "https://github.com/kevinzs2048/libtriton_jit.git",

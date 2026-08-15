@@ -258,6 +258,13 @@ def main() -> int:
             )
 
         site = runtime / "python/lib/python3.11/site-packages"
+        sme2_library = (
+            site / "flag_gems/csrc/arm/libflag_gems_arm_sme2.dylib"
+        )
+        if not sme2_library.is_file():
+            raise RuntimeError(
+                "extracted Runtime is missing the SME2 leaf library"
+            )
         probe_env = dict(os.environ)
         probe_env.update(
             {
@@ -279,7 +286,12 @@ def main() -> int:
                 str(runtime / "python/bin/python3.11"),
                 "-c",
                 (
-                    "import torch; "
+                    "import ctypes,torch; "
+                    "sme2=ctypes.CDLL(r'"
+                    + str(sme2_library)
+                    + "'); "
+                    "assert getattr("
+                    "sme2,'flag_gems_sme2_q4_asym_g128_m16n16',None); "
                     "torch.ops.load_library(r'"
                     + str(site / "flag_gems/csrc/arm/libflag_gems_arm_ops.dylib")
                     + "'); "

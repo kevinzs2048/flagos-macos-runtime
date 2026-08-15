@@ -44,6 +44,7 @@ export PATH="/usr/bin:/bin:/usr/sbin:/sbin${PATH:+:$PATH}"
 
 # Do not inherit retired development routes or host-absolute libraries.
 unset FLAGGEMS_VENDOR_NAME FLAGGEMS_LIBTRITON_JIT_Q4_OP
+unset FLAGGEMS_Q4_G128_SME2_LIBRARY
 unset FLAGOS_Q4_KERNEL_SOURCE FLAGOS_W8_KERNEL_SOURCE
 unset TRITON_CPU_QWEN35_Q4_RUNTIME TRITON_BACKENDS_IN_TREE
 unset TRITON_CPU_BACKEND TRITON_CPU_FIXED_I8MM

@@ -158,7 +158,7 @@ SOURCE_PREFIX_MAP_FLAGS="-ffile-prefix-map=$VLLM_SOURCE=vllm-0.20.2 -ffile-prefi
   -DTRITON_JIT_INSTALL=ON -DBUILD_TESTING=OFF
 "$CMAKE" --build "$NATIVE_JIT_BUILD" --parallel 8
 
-# Build the single FlagGems Q4/W8/GDN operator bundle against that runtime.
+# Build the FlagGems Q4/W8/GDN dispatcher and the Apple SME2 leaf library.
 "$CMAKE" -S "$SOURCE_ROOT/FlagGems/src/flag_gems/csrc/arm" \
   -B "$NATIVE_OPS_BUILD" -G Ninja -DCMAKE_MAKE_PROGRAM="$NINJA" \
   -DCMAKE_BUILD_TYPE=Release -DPython_EXECUTABLE="$BUILD_PYTHON" \
@@ -179,6 +179,8 @@ mkdir -p "$STAGE/share/triton_jit/scripts"
   "$STAGE/share/triton_jit/scripts/"
 /usr/bin/ditto "$NATIVE_OPS_BUILD/libflag_gems_arm_ops.dylib" \
   "$SITE/flag_gems/csrc/arm/libflag_gems_arm_ops.dylib"
+/usr/bin/ditto "$NATIVE_OPS_BUILD/libflag_gems_arm_sme2.dylib" \
+  "$SITE/flag_gems/csrc/arm/libflag_gems_arm_sme2.dylib"
 /usr/bin/ditto "$LIBOMP_ROOT/lib/libomp.dylib" "$STAGE/lib/libomp.dylib"
 /usr/bin/ditto "$LIBOMP_ROOT/include/omp.h" "$STAGE/include/omp.h"
 
