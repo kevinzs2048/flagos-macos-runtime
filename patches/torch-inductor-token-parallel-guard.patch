@@ -1,0 +1,34 @@
+--- cpp.py
++++ cpp.py
+@@ -10,6 +10,7 @@
+ import itertools
+ import math
+ import operator
++import os
+ import re
+ import sys
+ import warnings
+@@ -5570,7 +5571,23 @@
+             for old, new in self.args.aliases():
+                 code.writeline(f"auto {old} = {new};")
+-            code.splice(self.loops_code)
++            # vLLM uses one symbolic graph for both prefill and decode.  For
++            # token-major kernels Inductor otherwise emits an unconditional
++            # OpenMP region even when the runtime token count (ks0) is one.
++            # Keep prefill parallel while executing the single-token path on
++            # the caller thread.  This is opt-in until it can be upstreamed as
++            # a general dynamic-loop profitability guard.
++            if (
++                os.environ.get("FLAGOS_INDUCTOR_TOKEN_PARALLEL_GUARD") == "1"
++                and "const int64_t ks0" in arg_defs
++            ):
++                loops_code = self.loops_code.getvalue().replace(
++                    "#pragma omp parallel\n",
++                    "#pragma omp parallel if(ks0 > 1)\n",
++                )
++                code.splice(loops_code)
++            else:
++                code.splice(self.loops_code)
+         return code.getvalue()
+ 
+     def call_kernel(self, wrapper, kernel_name):

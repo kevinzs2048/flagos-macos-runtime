@@ -1,0 +1,31 @@
+diff --git a/cmake/cpu_extension.cmake b/cmake/cpu_extension.cmake
+--- a/cmake/cpu_extension.cmake
++++ b/cmake/cpu_extension.cmake
+@@ -24,8 +24,27 @@ set (ENABLE_NUMA TRUE)
+ # Check the compile flags
+ #
+ if(MACOSX_FOUND)
++    # Apple Clang ignores OpenMP pragmas unless the frontend flag is passed
++    # explicitly. Merely resolving omp_get_* through PyTorch leaves every
++    # parallel region serial.
++    set(VLLM_LIBOMP_ROOT "$ENV{FLAGOS_LIBOMP_ROOT}" CACHE PATH
++        "Prefix containing include/omp.h and lib/libomp.dylib")
++    if(NOT VLLM_LIBOMP_ROOT)
++        set(VLLM_LIBOMP_ROOT "/opt/homebrew/opt/libomp")
++    endif()
++    find_path(VLLM_LIBOMP_INCLUDE_DIR omp.h
++        HINTS "${VLLM_LIBOMP_ROOT}/include"
++        REQUIRED)
++    find_library(OPEN_MP NAMES omp
++        HINTS "${VLLM_LIBOMP_ROOT}/lib"
++        NO_DEFAULT_PATH
++        REQUIRED)
+     list(APPEND CXX_COMPILE_FLAGS
++        "-Xpreprocessor"
++        "-fopenmp"
++        "-I${VLLM_LIBOMP_INCLUDE_DIR}"
+         "-DVLLM_CPU_EXTENSION")
++    list(APPEND LIBS ${OPEN_MP})
+ else()
+     list(APPEND CXX_COMPILE_FLAGS
+         "-fopenmp"

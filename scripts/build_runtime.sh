@@ -18,6 +18,9 @@ STAGE="$BUILD_ROOT/flagos-runtime-$VERSION-darwin-arm64-m5pro"
 SITE="$STAGE/python/lib/python3.11/site-packages"
 NATIVE_JIT_BUILD="$ROOT/build/native-libtriton-jit"
 NATIVE_OPS_BUILD="$ROOT/build/native-flag-gems-arm"
+NATIVE_VLLM_BUILD="$ROOT/build/native-vllm-cpu"
+NATIVE_VLLM_OUT="$ROOT/build/native-vllm-out"
+VLLM_PATCHED_SOURCE="$ROOT/build/vllm-darwin-openmp-source"
 PLUGIN_WHEEL_ROOT="$ROOT/build/plugin-wheel"
 PLUGIN_INSTALL_ROOT="$ROOT/build/plugin-install"
 SOURCE_ROOT="$ROOT/build/sources"
@@ -43,6 +46,7 @@ done
 
 for generated in \
   "$STAGE" "$NATIVE_JIT_BUILD" "$NATIVE_OPS_BUILD" \
+  "$NATIVE_VLLM_BUILD" "$NATIVE_VLLM_OUT" "$VLLM_PATCHED_SOURCE" \
   "$PLUGIN_WHEEL_ROOT" "$PLUGIN_INSTALL_ROOT"
 do
   case "$generated" in
@@ -73,20 +77,58 @@ find "$STAGE/python/bin" -mindepth 1 -maxdepth 1 \
   --exclude '__pycache__/' --exclude '*.pyc' --exclude '.pytest_cache/' \
   --exclude '__editable__*' --exclude '_flag_gems_editable*' \
   "$BUILD_SITE/" "$SITE/"
+# The shared symbolic graph handles both pp and tg.  Teach Inductor's generated
+# token-major kernels to avoid an otherwise unconditional OpenMP team for
+# single-token decode while preserving parallel prefill.
+/usr/bin/patch --directory="$SITE/torch/_inductor/codegen" --strip=0 \
+  --input="$ROOT/patches/torch-inductor-token-parallel-guard.patch"
 "$BUILD_PYTHON" "$ROOT/scripts/relocate_python_sysconfig.py" \
   "$STAGE/python" "$PYTHON_BASE"
 
-# vLLM: stock committed Python sources plus its already-validated CPU extension.
+# vLLM: retain the stock Python sources, but rebuild the CPU extension after
+# applying the audited Darwin OpenMP build fix to an isolated source copy.
+# The locked upstream export and the maintainer checkout remain untouched.
+/usr/bin/rsync -a --delete --exclude '__pycache__/' --exclude '*.pyc' \
+  "$SOURCE_ROOT/vllm/" "$VLLM_PATCHED_SOURCE/"
+/usr/bin/patch --directory="$VLLM_PATCHED_SOURCE" --strip=1 \
+  --input="$ROOT/patches/vllm-darwin-openmp.patch"
+/usr/bin/patch --directory="$VLLM_PATCHED_SOURCE" --strip=1 \
+  --input="$ROOT/patches/vllm-stock-inductor-aot.patch"
+(
+  cd "$VLLM_PATCHED_SOURCE"
+  env FLAGOS_LIBOMP_ROOT="$LIBOMP_ROOT" VLLM_TARGET_DEVICE=cpu \
+    CMAKE_BUILD_TYPE=Release MAX_JOBS=8 \
+    SETUPTOOLS_SCM_PRETEND_VERSION=0.20.2 \
+    "$BUILD_PYTHON" setup.py build_ext \
+      --build-temp "$NATIVE_VLLM_BUILD" \
+      --build-lib "$NATIVE_VLLM_OUT"
+  env VLLM_TARGET_DEVICE=cpu SETUPTOOLS_SCM_PRETEND_VERSION=0.20.2 \
+    "$BUILD_PYTHON" setup.py dist_info --output-dir "$NATIVE_VLLM_OUT"
+)
+[ -f "$NATIVE_VLLM_OUT/vllm/_C.abi3.so" ] || {
+  echo "The Darwin OpenMP vLLM CPU extension was not built" >&2
+  exit 2
+}
+VLLM_METADATA=$(find "$NATIVE_VLLM_OUT" -maxdepth 1 -type d \
+  -name 'vllm-0.20.2+cpu.dist-info' -print -quit)
+[ -n "$VLLM_METADATA" ] || {
+  echo "The pinned vLLM distribution metadata was not generated" >&2
+  exit 2
+}
+/usr/bin/ditto "$ROOT/packaging/vllm-WHEEL" "$VLLM_METADATA/WHEEL"
 /usr/bin/rsync -a --delete --exclude '__pycache__/' --exclude '*.pyc' \
   "$SOURCE_ROOT/vllm/vllm/" "$SITE/vllm/"
-/usr/bin/ditto "$VLLM_SOURCE/vllm/_C.abi3.so" "$SITE/vllm/_C.abi3.so"
-# vcs-versioning generates this ignored module beside the validated extension.
-# Keep the generated version/commit identity paired with that compiled vLLM.
-[ -f "$VLLM_SOURCE/vllm/_version.py" ] || {
+/usr/bin/ditto "$NATIVE_VLLM_OUT/vllm/_C.abi3.so" "$SITE/vllm/_C.abi3.so"
+# vcs-versioning generates this ignored module during the isolated extension
+# build. Keep its pinned 0.20.2+cpu identity paired with that compiled vLLM.
+[ -f "$VLLM_PATCHED_SOURCE/vllm/_version.py" ] || {
   echo "The validated vLLM build has no generated _version.py" >&2
   exit 2
 }
-/usr/bin/ditto "$VLLM_SOURCE/vllm/_version.py" "$SITE/vllm/_version.py"
+/usr/bin/ditto "$VLLM_PATCHED_SOURCE/vllm/_version.py" "$SITE/vllm/_version.py"
+find "$SITE" -maxdepth 1 -type d -name 'vllm-*.dist-info' \
+  -exec /bin/rm -rf -- {} +
+/usr/bin/ditto "$VLLM_METADATA" "$SITE/$(basename "$VLLM_METADATA")"
 
 # Triton-CPU: committed common Python sources and committed CPU backend. The
 # compiler extension is the binary exercised by the performance baseline.

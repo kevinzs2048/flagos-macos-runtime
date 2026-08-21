@@ -1,13 +1,14 @@
 # Building the FlagOS macOS W4A8 Runtime
 
 The build creates a self-contained Apple M5 Pro Runtime that exposes the
-standard `vllm` CLI. It does not patch the vLLM source tree and does not include
+standard `vllm` CLI. It applies the audited Darwin OpenMP and stock-Inductor
+AOT compatibility patches to an isolated copy of vLLM and does not include
 model weights.
 
 ## Required inputs
 
-1. A clean vLLM v0.20.2 checkout containing the validated CPU extension
-   `vllm/_C.abi3.so` and a Python 3.11 environment at `.venv311`.
+1. A clean vLLM v0.20.2 checkout and a Python 3.11 build environment at
+   `.venv311`. The CPU extension is rebuilt from source.
 2. A relocatable macOS libomp prefix containing `include/omp.h` and
    `lib/libomp.dylib`.
 3. Network access to the Git URLs pinned in `sources.lock.json`, or clean local
@@ -37,7 +38,8 @@ export FLAGOS_NINJA=/path/to/ninja
 1. Materializes all five exact Git commits and verifies both commit and tree
    IDs against `sources.lock.json`.
 2. Copies and relocates the validated Python distribution and dependencies.
-3. Installs stock vLLM 0.20.2 plus the pinned vLLM-Plugin-FL adapter.
+3. Installs stock vLLM 0.20.2 Python code, rebuilds its CPU extension with
+   Darwin OpenMP enabled, and adds the pinned vLLM-Plugin-FL adapter.
 4. Installs the pinned Triton CPU and FlagGems Python sources.
 5. Rebuilds libtriton_jit and the FlagGems Q4/W8/GDN native operator bundle.
 6. Adds the single M5 Pro performance profile and standard `vllm` launcher.

@@ -1,0 +1,18 @@
+diff --git a/vllm/compilation/decorators.py b/vllm/compilation/decorators.py
+--- a/vllm/compilation/decorators.py
++++ b/vllm/compilation/decorators.py
+@@ -300,7 +300,13 @@ def _try_load_aot_compiled_fn(
+             # Eagerly load compiled artifacts now that traced_files
+             # is populated by _verify_source_unchanged.
+             with maybe_use_cudagraph_partition_wrapper(model.vllm_config):
+-                loaded_fn._artifacts.compiled_fn.finalize_loading(model.vllm_config)
++                compiled_fn = loaded_fn._artifacts.compiled_fn
++                finalize_loading = getattr(compiled_fn, "finalize_loading", None)
++                # vLLM's serializable backend defers loading until traced_files
++                # is available. Stock Inductor artifacts are finalized by
++                # PyTorch during deserialization and expose no such hook.
++                if callable(finalize_loading):
++                    finalize_loading(model.vllm_config)
+             compilation_counter.num_aot_artifacts_loaded += 1
+             logger.info(
+                 "Directly load AOT compilation from path %s", aot_compilation_path
