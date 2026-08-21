@@ -11,8 +11,10 @@ model weights.
    `.venv311`. The CPU extension is rebuilt from source.
 2. A relocatable macOS libomp prefix containing `include/omp.h` and
    `lib/libomp.dylib`.
-3. Network access to the Git URLs pinned in `sources.lock.json`, or clean local
-   checkouts supplied through the optional source override variables below.
+3. Clean local checkouts for the unpublished Triton CPU and FlagGems candidate
+   commits, supplied through the source override variables below. The other
+   locked components may be fetched from their Git URLs. After the candidate
+   branches are published, all five components can be fetched directly.
 
 No input path is hardcoded. The two required paths may be anywhere:
 
@@ -70,14 +72,17 @@ export FLAGOS_LIBOMP_ROOT=/path/to/relocatable-libomp
 
 ## Local source overrides
 
-By default, non-vLLM components are fetched from their exact locked commits and
-cached below the ignored `build/source-cache/` directory. For an offline build
-or active component development, point any component at a local checkout:
+Published non-vLLM components are fetched from their exact locked commits and
+cached below the ignored `build/source-cache/` directory. The current Triton
+CPU and FlagGems candidate commits have not yet been pushed, so their two local
+overrides are required. For a fully offline build, point every component at a
+local checkout:
 
 ```bash
 export FLAGOS_VLLM_SOURCE=/path/to/vllm-0.20.2
 export FLAGOS_TRITON_SOURCE=/path/to/triton-cpu
 export FLAGOS_FLAGGEMS_SOURCE=/path/to/FlagGems
+# The following two are optional when their locked commits are fetchable.
 export FLAGOS_PLUGIN_SOURCE=/path/to/vllm-plugin-FL
 export FLAGOS_LIBTRITON_JIT_SOURCE=/path/to/libtriton_jit
 

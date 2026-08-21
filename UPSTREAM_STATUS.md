@@ -6,6 +6,13 @@ match both locked identifiers.  The W4/W8 compiler and kernel work is isolated
 on `codex/minicpm5-g128-m16-prefill`; the unchanged adapter/JIT repositories
 remain on their existing `macos-arm-w4a8` line.
 
+As of 2026-08-22, the two `codex/minicpm5-g128-m16-prefill` refs are committed
+locally but are not present on the configured GitHub remotes. A source build
+must therefore set `FLAGOS_TRITON_SOURCE` and `FLAGOS_FLAGGEMS_SOURCE` to these
+clean checkouts. No remote push is performed implicitly by the release build.
+Once maintainers publish the refs, the same commit/tree lock can use network
+materialization without changing the candidate source.
+
 | Component | Responsibility | Candidate state |
 | --- | --- | --- |
 | vLLM 0.20.2 | Framework, CPU attention and compressed-tensors model loading | Stock `v0.20.2` commit `bc150f502`, plus audited Darwin OpenMP and stock-Inductor AOT patches during the isolated build |

@@ -111,6 +111,9 @@ Runtime hashes and direct native-op registration checks.
 - SME2 is detected but unused by the production G128 route; the validated
   kernels use Arm SDOT/I8MM.
 - The alpha is not Developer ID signed or notarized.
+- The locked Triton CPU and FlagGems candidate commits are locally committed
+  but not yet published on their configured remotes; source rebuilds currently
+  require the two clean local checkout overrides documented in `BUILDING.md`.
 - Python/Torch and the compiled vLLM/Triton compiler extensions come from the
   validated build environment rather than a fully hermetic CI rebuild.
 - The external model repository ID is intentionally maintained by the model

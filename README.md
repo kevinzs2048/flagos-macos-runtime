@@ -76,9 +76,11 @@ benchmark or model-download product command.
 The one-command build consumes a clean vLLM v0.20.2 build environment and a
 relocatable libomp prefix. It fetches and verifies the exact component commits
 recorded by `sources.lock.json`; clean local checkout overrides are supported
-for offline and developer builds. The vLLM CPU extension is rebuilt with the
-audited Darwin OpenMP and AOT-cache compatibility patches; the upstream source
-export is not modified.
+for offline and developer builds. The current Triton CPU and FlagGems candidate
+commits are locally committed but not yet published, so those two overrides are
+required until their branches are pushed. The vLLM CPU extension is rebuilt
+with the audited Darwin OpenMP and AOT-cache compatibility patches; the
+upstream source export is not modified.
 
 ```bash
 ./build.sh /path/to/vllm-0.20.2 /path/to/relocatable-libomp
