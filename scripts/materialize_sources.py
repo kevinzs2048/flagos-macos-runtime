@@ -142,7 +142,14 @@ def main() -> int:
                 )
                 origin = f"local:{repo}"
             else:
-                repo = fetch_repo(name, metadata)
+                try:
+                    repo = fetch_repo(name, metadata)
+                except subprocess.CalledProcessError as error:
+                    raise RuntimeError(
+                        f"{name}: locked commit {metadata['commit']} could not "
+                        f"be fetched from {metadata['url']}; publish that commit "
+                        f"or set {variable} to a clean matching checkout"
+                    ) from error
                 origin = metadata["url"]
             archive(repo, metadata["commit"], temporary / directory)
             print(f"materialized {name} {metadata['commit'][:12]} from {origin}")
