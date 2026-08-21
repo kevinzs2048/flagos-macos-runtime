@@ -10,7 +10,7 @@ remain on their existing `macos-arm-w4a8` line.
 | --- | --- | --- |
 | vLLM 0.20.2 | Framework, CPU attention and compressed-tensors model loading | Stock `v0.20.2` commit `bc150f502`, plus audited Darwin OpenMP and stock-Inductor AOT patches during the isolated build |
 | vLLM-Plugin-FL | Thin vLLM platform/kernel registration and version-locked compatibility hooks | `macos-arm-w4a8` at `2ccd0485`; unchanged by the MiniCPM optimization |
-| FlagGems 5.0.2 | Triton W4/W8 pack and kernels, Arm operator binding and process-local JIT cache locks | `codex/minicpm5-g128-m16-prefill` at `3610e17c` |
+| FlagGems 5.0.2 | Triton W4/W8 pack and kernels, Arm operator binding and process-local JIT cache locks | `codex/minicpm5-g128-m16-prefill` at `4e284f0d` |
 | Triton CPU 3.7.2 | Apple Arm CPU lowering, SDOT/I8MM and native M16 accumulator preservation | `codex/minicpm5-g128-m16-prefill` at `1feeab7e` |
 | libtriton_jit 0.1.0 | CPU JIT launch ABI and OpenMP scheduling | `macos-arm-w4a8` at `a4eb4db9`; no local change |
 | Runtime wrapper/profile | Source materialization, M5 Pro W4/W8 policy, standard vLLM launcher and installer | This repository; current branch `codex/minicpm5-arm-runtime` |
