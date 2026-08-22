@@ -1,9 +1,9 @@
 # FlagOS macOS Runtime developer-alpha acceptance
 
 Acceptance host: Mac17,9 / Apple M5 Pro / 64 GiB / macOS 26.5.1. Runtime
-version: `0.1.0-alpha.1`; ABI: `flagos-arm-w4a8-g128-v1`. The original release
-model is `Qwen3.8-27B-W4A8-GPTQ-G128-packed`; the final candidate additionally
-validates MiniCPM5-2.6B W4A8 G128 and channel-wise W8A8 text inference.
+version: `0.1.0-alpha.1`; ABI: `flagos-arm-w4a8-g128-v1`. The MiniCPM Express
+release validates MiniCPM5-2.6B W4A8 G128 and channel-wise W8A8 text inference.
+The earlier Qwen3.8-27B W4A8 validation remains as compatibility evidence.
 
 This is an unsigned, non-notarized developer alpha. It is a native macOS CPU
 Runtime; no Docker or Metal path is used.
@@ -27,8 +27,8 @@ Runtime; no Docker or Metal path is used.
 
 | Asset | Size | SHA256 |
 | --- | ---: | --- |
-| Runtime logical archive (11 checksummed Release parts) | 512.4 MiB | `5a8d731bb2575e318de54d45be6dc8ea670c2fa3a7bd2e5b79db6db39195d87f` |
-| `flagos-wheelhouse-0.1.0-alpha.1-cp311-darwin-arm64.tar.gz` | 81.1 MiB | `07fd92e0a48bae7a08b1c51a436d3b6eb0bffed416680401c45894a8c7ed344a` |
+| Runtime logical archive (11 checksummed Release parts) | 512.4 MiB | `a618d2d2c1891a0e83f49cfe4eeef19bbf5362a72e72b4a794184bcfe9950c20` |
+| `flagos-wheelhouse-0.1.0-alpha.1-cp311-darwin-arm64.tar.gz` | 81.1 MiB | `e331beebc671617f6a8f823057378508662f4a8547fd3a4f45c817dc75adcb9b` |
 | `install.sh` | 6.6 KiB | `ec3f279b54e70e7a5b7a299eff71cdf55cca6ca414fe235f8ed0a080f02cbc46` |
 
 Archive verification checked 47,395 Runtime files, 45,136 text files for host
@@ -87,13 +87,15 @@ FlagGems source file used by the clean repository, Runtime archive and
 developer wheel is byte-identical. The final dylib links only libtriton_jit,
 Torch, OpenMP and system libraries; it has no KleidiAI/TLE compute dependency.
 
-The final packaged-Runtime MiniCPM5 single-stream medians are W4A8 PP512
-999.40 tok/s, TG128 91.95 tok/s and Total 337.81 tok/s; W8A8 is PP512
-1160.12 tok/s, TG128 65.91 tok/s and Total 270.20 tok/s. These measurements use
-`vllm serve`, concurrency 1, disabled prefix caching, one discarded full-shape
-prime and three retained samples separated by 90-second idle intervals. Full
-samples and the exact archive hash are recorded in
-`benchmarks/minicpm5-packaged-runtime-final.json`.
+The latest MiniCPM5 single-stream medians are W4A8 PP512 942.63 tok/s, TG128
+90.07 tok/s and Total 327.80 tok/s; W8A8 is PP512 1166.56 tok/s, TG128 65.58
+tok/s and Total 268.29 tok/s. These measurements use `vllm serve`, concurrency
+1, disabled prefix caching, one discarded full-shape prime and three retained
+samples separated by 90-second idle intervals. The same HTTP workload on
+llama.cpp with KleidiAI measured Q4_0 at 776.53/74.21/269.66 tok/s and Q8_0 at
+769.51/51.94/205.74 tok/s. Full retained values and the comparison caveat are
+recorded in `benchmarks/minicpm5-express-comparison-20260822.json`; the earlier
+packaged-runtime run remains in `benchmarks/minicpm5-packaged-runtime-final.json`.
 
 ## Batch-one HTTP performance
 

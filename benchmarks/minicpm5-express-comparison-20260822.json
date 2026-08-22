@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "date": "2026-08-22",
+  "host": "Mac17,9 / Apple M5 Pro / 64 GiB / macOS 26.5.1",
+  "protocol": {
+    "server": "real HTTP server",
+    "concurrency": 1,
+    "input_tokens": 512,
+    "output_tokens": 128,
+    "prefix_cache": false,
+    "discarded_full_shape_primes": 1,
+    "retained_samples": 3,
+    "idle_seconds_before_each_retained_sample": 90,
+    "prefill": "512 / streaming TTFT",
+    "decode": "1 / mean streaming TPOT",
+    "total": "640 / HTTP request wall time"
+  },
+  "flagos": {
+    "runtime_archive": "flagos-runtime-0.1.0-alpha.1-darwin-arm64-m5pro.tar.gz",
+    "vllm": "0.20.2+cpu",
+    "models": {
+      "w4a8_g128": {
+        "checkpoint": "MiniCPM5-2.6B-W4A8-G128-FlagOS",
+        "samples": [
+          [942.625860, 90.168522, 327.799245],
+          [941.494412, 89.808344, 326.756209],
+          [964.264459, 90.066211, 329.589672]
+        ],
+        "median": [942.625860, 90.066211, 327.799245]
+      },
+      "w8a8_channel": {
+        "checkpoint": "MiniCPM5-2.6B-W8A8-Channel-FlagOS",
+        "samples": [
+          [1131.986515, 65.634085, 267.981727],
+          [1166.883527, 65.581856, 269.331076],
+          [1166.563377, 65.269624, 268.290209]
+        ],
+        "median": [1166.563377, 65.581856, 268.290209]
+      }
+    }
+  },
+  "llama_cpp": {
+    "commit": "680a9ae",
+    "build": {
+      "GGML_CPU_KLEIDIAI": true,
+      "GGML_METAL": false,
+      "device": "none",
+      "threads": 4,
+      "threads_batch": 16,
+      "kleidiai_environment_overrides": false,
+      "runtime_kernel_selection": "automatic SME2"
+    },
+    "models": {
+      "q4_0": {
+        "checkpoint": "MiniCPM5-2.6B-Q4_0.gguf",
+        "samples": [
+          [776.532638, 74.910095, 271.777619],
+          [784.747292, 66.966532, 251.077935],
+          [773.641735, 74.205799, 269.656118]
+        ],
+        "median": [776.532638, 74.205799, 269.656118],
+        "cpu_kleidiai_model_buffer_mib": 2126.27
+      },
+      "q8_0": {
+        "checkpoint": "MiniCPM5-2.6B-Q8_0.gguf",
+        "samples": [
+          [744.508702, 49.868223, 197.864758],
+          [804.665804, 51.945857, 207.706287],
+          [769.507369, 51.939963, 205.743623]
+        ],
+        "median": [769.507369, 51.939963, 205.743623],
+        "cpu_kleidiai_model_buffer_mib": 4311.22
+      }
+    }
+  },
+  "metric_order": ["pp512_tok_s", "tg128_tok_s", "total_tok_s"],
+  "flagos_over_llama_cpp": {
+    "w4a8_g128_over_q4_0": [1.213891, 1.213735, 1.215620],
+    "w8a8_channel_over_q8_0": [1.515987, 1.262647, 1.304003]
+  },
+  "notes": [
+    "W4A8 G128 and Q4_0 are different quantization formats.",
+    "W8A8 Channel and Q8_0 are different quantization formats.",
+    "The second llama.cpp Q4 decode sample shows system interference and is retained; medians are reported."
+  ]
+}

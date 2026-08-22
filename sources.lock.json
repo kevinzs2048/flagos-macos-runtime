@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "locked_at": "2026-08-22T18:24:51+08:00",
+  "locked_at": "2026-08-22T20:15:00+08:00",
   "runtime_version": "0.1.0-alpha.1",
   "runtime_abi": "flagos-arm-w4a8-g128-v1",
   "source_policy": "materialize_exact_git_commits_at_build_time",
@@ -15,28 +15,28 @@
     "triton_cpu": {
       "url": "https://github.com/kevinzs2048/triton-cpu.git",
       "version": "3.7.2",
-      "branch": "codex/minicpm5-g128-m16-prefill",
+      "branch": "minicpm-express",
       "commit": "1feeab7e3505282d840e2898a1101ecff3a1c4b5",
       "tree": "f91d6860b5dfa2e0d7391b5565064a3a2239d220"
     },
     "flag_gems": {
       "url": "https://github.com/kevinzs2048/FlagGems.git",
       "version": "5.0.2",
-      "branch": "codex/minicpm5-final-candidate",
+      "branch": "minicpm-express",
       "commit": "a892d50cbc70c8a02333002b624bc426e0ca9b14",
       "tree": "879099fcebf4928372cc51aa76db514644079bf8"
     },
     "libtriton_jit": {
       "url": "https://github.com/kevinzs2048/libtriton_jit.git",
       "version": "0.1.0",
-      "branch": "macos-arm-w4a8",
+      "branch": "minicpm-express",
       "commit": "a4eb4db996a63afe281f6ac6418182c63105d73a",
       "tree": "97801a1f12fc2137796ff5a17a3f351a89d6a848"
     },
     "vllm_plugin_fl": {
       "url": "https://github.com/kevinzs2048/vllm-plugin-FL.git",
       "version": "0.0.0+g2ccd0485a",
-      "branch": "macos-arm-w4a8",
+      "branch": "minicpm-express",
       "commit": "2ccd0485ae4faba007ad0562fc00e776d67c2eed",
       "tree": "4aee5b5f252f3121dd972f47915746064227a588"
     }

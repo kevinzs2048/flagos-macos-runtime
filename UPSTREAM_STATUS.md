@@ -2,10 +2,10 @@
 
 `sources.lock.json` records an exact commit and tree for every component. The
 build materializes those commits from Git; local overrides must be clean and
-match both locked identifiers. The compiler work remains isolated on
-`codex/minicpm5-g128-m16-prefill`; the combined W4/W8 FlagGems candidate is on
-`codex/minicpm5-final-candidate`. The unchanged adapter/JIT repositories remain
-on their existing `macos-arm-w4a8` line.
+match both locked identifiers. All four non-vLLM component checkouts used by
+the MiniCPM Express package are on the local `minicpm-express` branch. The
+commits and trees are unchanged from the reviewed final candidate; the branch
+groups the exact package inputs without rewriting their history.
 
 As of 2026-08-22, the Triton and FlagGems candidate refs are committed locally
 but are not present on the configured GitHub remotes. A source build must
@@ -17,11 +17,11 @@ materialization without changing the candidate source.
 | Component | Responsibility | Candidate state |
 | --- | --- | --- |
 | vLLM 0.20.2 | Framework, CPU attention and compressed-tensors model loading | Stock `v0.20.2` commit `bc150f502`, plus audited Darwin OpenMP and stock-Inductor AOT patches during the isolated build |
-| vLLM-Plugin-FL | Thin vLLM platform/kernel registration and version-locked compatibility hooks | `macos-arm-w4a8` at `2ccd0485`; unchanged by the MiniCPM optimization |
-| FlagGems 5.0.2 | Triton W4/W8 pack and kernels, Arm operator binding and process-local JIT cache locks | `codex/minicpm5-final-candidate` at `a892d50c` |
-| Triton CPU 3.7.2 | Apple Arm CPU lowering, SDOT/I8MM and native M16 accumulator preservation | `codex/minicpm5-g128-m16-prefill` at `1feeab7e` |
-| libtriton_jit 0.1.0 | CPU JIT launch ABI and OpenMP scheduling | `macos-arm-w4a8` at `a4eb4db9`; no local change |
-| Runtime wrapper/profile | Source materialization, M5 Pro W4/W8 policy, standard vLLM launcher and installer | This repository; current branch `codex/minicpm5-final-candidate` |
+| vLLM-Plugin-FL | Thin vLLM platform/kernel registration and version-locked compatibility hooks | local `minicpm-express` at `2ccd0485`; unchanged by the MiniCPM optimization |
+| FlagGems 5.0.2 | Triton W4/W8 pack and kernels, Arm operator binding and process-local JIT cache locks | local `minicpm-express` at `a892d50c` |
+| Triton CPU 3.7.2 | Apple Arm CPU lowering, SDOT/I8MM and native M16 accumulator preservation | local `minicpm-express` at `1feeab7e` |
+| libtriton_jit 0.1.0 | CPU JIT launch ABI and OpenMP scheduling | local `minicpm-express` at `a4eb4db9`; no code change |
+| Runtime wrapper/profile | Source materialization, M5 Pro W4/W8 policy, standard vLLM launcher and installer | local `minicpm-express` |
 
 ## Review order and measured effect
 
