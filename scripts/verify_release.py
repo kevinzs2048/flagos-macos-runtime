@@ -213,6 +213,10 @@ def verify_m5_profile(path: Path) -> None:
         "export FLAGGEMS_ARM_Q4_G128_PREFILL_BLOCK_M=16",
         "export FLAGGEMS_ARM_Q4_G128_PREFILL_SUBGROUP_UNROLL=1",
         "export FLAGGEMS_W8_STEALING_PREFILL=1",
+        "export FLAGGEMS_W8_PREFILL_THREADS",
+        "export FLAGGEMS_W8_STEALING_DECODE=1",
+        "export FLAGGEMS_W8_STEALING_MIN_WORK",
+        "export FLAGGEMS_W8_BODY_STEAL_CHUNK",
         "export FLAGGEMS_VLLM_FAST_APPLY=1",
     )
     missing = [setting for setting in required if setting not in profile]
