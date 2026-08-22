@@ -205,6 +205,21 @@ def verify_jit_helpers(runtime: Path) -> None:
         raise RuntimeError(f"libtriton_jit helper import failed: {probe.stderr}")
 
 
+def verify_m5_profile(path: Path) -> None:
+    """Pin the validated MiniCPM prefill route in the shipped profile."""
+    profile = path.read_text(encoding="utf-8")
+    required = (
+        "export FLAGGEMS_ARM_Q4_G128_STEALING_PREFILL=1",
+        "export FLAGGEMS_ARM_Q4_G128_PREFILL_BLOCK_M=16",
+        "export FLAGGEMS_ARM_Q4_G128_PREFILL_SUBGROUP_UNROLL=1",
+        "export FLAGGEMS_W8_STEALING_PREFILL=1",
+        "export FLAGGEMS_VLLM_FAST_APPLY=1",
+    )
+    missing = [setting for setting in required if setting not in profile]
+    if missing:
+        raise RuntimeError(f"M5 Pro profile is missing validated settings: {missing}")
+
+
 def verify_provenance(runtime: Path) -> None:
     runtime_manifest = json.loads(
         (ROOT / "runtime-manifest.json").read_text(encoding="utf-8")
@@ -222,6 +237,7 @@ def verify_provenance(runtime: Path) -> None:
 
 
 def main() -> int:
+    verify_m5_profile(ROOT / "profiles" / "m5-pro.env")
     check_sidecar(RUNTIME_ASSET)
     check_sidecar(WHEELHOUSE_ASSET)
     installer_sidecar = (ROOT / "install.sh.sha256").read_text(encoding="utf-8").split()
@@ -237,6 +253,7 @@ def main() -> int:
         checked_files = verify_runtime_hashes(runtime)
         checked_text_files = verify_text_relocation(runtime)
         verify_jit_helpers(runtime)
+        verify_m5_profile(runtime / "share" / "flagos" / "m5-pro.env")
         verify_provenance(runtime)
         binary = audit_tree(runtime)
         if binary.get("forbidden_references"):
