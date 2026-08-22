@@ -1,0 +1,118 @@
+{
+  "schema_version": 1,
+  "date": "2026-08-22",
+  "host": {
+    "model": "Mac17,9",
+    "soc": "Apple M5 Pro",
+    "memory_gib": 64,
+    "os": "macOS 26.5.1"
+  },
+  "artifact": {
+    "name": "flagos-runtime-0.1.0-alpha.1-darwin-arm64-m5pro.tar.gz",
+    "sha256": "5a8d731bb2575e318de54d45be6dc8ea670c2fa3a7bd2e5b79db6db39195d87f",
+    "flag_gems_commit": "a892d50cbc70c8a02333002b624bc426e0ca9b14",
+    "triton_cpu_commit": "1feeab7e3505282d840e2898a1101ecff3a1c4b5"
+  },
+  "protocol": {
+    "server": "vllm serve from the packaged Runtime",
+    "concurrency": 1,
+    "input_tokens": 512,
+    "output_tokens": 128,
+    "prefix_caching": false,
+    "compilation_mode": 3,
+    "max_num_seqs": 1,
+    "discarded_full_shape_primes": 1,
+    "idle_seconds_before_each_retained_sample": 90,
+    "prefill_formula": "input_tokens / TTFT",
+    "decode_formula": "1000 / TPOT_ms",
+    "total_source": "vLLM serving benchmark total_token_throughput"
+  },
+  "models": {
+    "w4a8": {
+      "checkpoint": "MiniCPM5-2.6B-W4A8-G128-FlagOS",
+      "raw_result_names": [
+        "packaged-w4-cold-1.json",
+        "packaged-w4-cold-2.json",
+        "packaged-w4-cold-3.json"
+      ],
+      "samples": [
+        {
+          "pp512_tok_s": 964.897382,
+          "tg128_tok_s": 91.952569,
+          "total_tok_s": 334.628691,
+          "ttft_ms": 530.626375,
+          "tpot_ms": 10.875172
+        },
+        {
+          "pp512_tok_s": 1020.731786,
+          "tg128_tok_s": 91.951454,
+          "total_tok_s": 339.770156,
+          "ttft_ms": 501.600917,
+          "tpot_ms": 10.875304
+        },
+        {
+          "pp512_tok_s": 999.402293,
+          "tg128_tok_s": 91.937035,
+          "total_tok_s": 337.811201,
+          "ttft_ms": 512.306209,
+          "tpot_ms": 10.877010
+        }
+      ],
+      "median": {
+        "pp512_tok_s": 999.402293,
+        "tg128_tok_s": 91.951454,
+        "total_tok_s": 337.811201,
+        "ttft_ms": 512.306209,
+        "tpot_ms": 10.875304
+      },
+      "change_vs_previous_candidate_percent": {
+        "pp512": 4.17,
+        "tg128": 2.92,
+        "total": 3.25
+      }
+    },
+    "w8a8": {
+      "checkpoint": "MiniCPM5-2.6B-W8A8-Channel-FlagOS",
+      "raw_result_names": [
+        "packaged-w8-cold-1.json",
+        "packaged-w8-cold-2.json",
+        "packaged-w8-cold-3.json"
+      ],
+      "samples": [
+        {
+          "pp512_tok_s": 1119.829707,
+          "tg128_tok_s": 65.475622,
+          "total_tok_s": 266.921697,
+          "ttft_ms": 457.212375,
+          "tpot_ms": 15.272860
+        },
+        {
+          "pp512_tok_s": 1172.082795,
+          "tg128_tok_s": 65.913477,
+          "total_tok_s": 270.676022,
+          "ttft_ms": 436.829209,
+          "tpot_ms": 15.171404
+        },
+        {
+          "pp512_tok_s": 1160.124240,
+          "tg128_tok_s": 65.921885,
+          "total_tok_s": 270.197330,
+          "ttft_ms": 441.332042,
+          "tpot_ms": 15.169469
+        }
+      ],
+      "median": {
+        "pp512_tok_s": 1160.124240,
+        "tg128_tok_s": 65.913477,
+        "total_tok_s": 270.197330,
+        "ttft_ms": 441.332042,
+        "tpot_ms": 15.171404
+      },
+      "change_vs_previous_candidate_percent": {
+        "pp512": 1.35,
+        "tg128": 0.17,
+        "total": 0.74
+      }
+    }
+  }
+}

@@ -87,12 +87,13 @@ FlagGems source file used by the clean repository, Runtime archive and
 developer wheel is byte-identical. The final dylib links only libtriton_jit,
 Torch, OpenMP and system libraries; it has no KleidiAI/TLE compute dependency.
 
-The most recent accepted MiniCPM5 single-stream HTTP baselines are W4A8
-PP512 959.42 tok/s, TG128 89.34 tok/s and Total 327.19 tok/s; W8A8 is about
-PP512 1144.7 tok/s, TG128 65.8 tok/s and Total 268.22 tok/s. These measurements
-use the exact locked source candidate, `vllm serve`, concurrency 1 and disabled
-prefix caching. A final thermally cooled run of the packaged archive remains a
-performance gate rather than being inferred from numerical unit tests.
+The final packaged-Runtime MiniCPM5 single-stream medians are W4A8 PP512
+999.40 tok/s, TG128 91.95 tok/s and Total 337.81 tok/s; W8A8 is PP512
+1160.12 tok/s, TG128 65.91 tok/s and Total 270.20 tok/s. These measurements use
+`vllm serve`, concurrency 1, disabled prefix caching, one discarded full-shape
+prime and three retained samples separated by 90-second idle intervals. Full
+samples and the exact archive hash are recorded in
+`benchmarks/minicpm5-packaged-runtime-final.json`.
 
 ## Batch-one HTTP performance
 
