@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-VERSION=0.1.0-alpha.1
+VERSION=0.1.0-alpha.2
 STAGE="$ROOT/build/runtime-$VERSION/flagos-runtime-$VERSION-darwin-arm64-m5pro"
 PYTHON="$STAGE/python/bin/python3.11"
 SITE="$STAGE/python/lib/python3.11/site-packages"

@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "0.1.0-alpha.1"
+VERSION = "0.1.0-alpha.2"
 RUNTIME_ASSET = (
     ROOT
     / "artifacts"
@@ -105,6 +105,12 @@ def update_acceptance(runtime_parts: list[Path]) -> None:
         r" \| [0-9.]+ MiB \| `[0-9a-f]{64}` \|",
         f"| `flagos-wheelhouse-{VERSION}-cp311-darwin-arm64.tar.gz` "
         f"| {wheelhouse_mib:.1f} MiB | `{sha256(WHEELHOUSE_ASSET)}` |",
+    )
+    text = replace_once(
+        text,
+        r"\| `install\.sh` \| [0-9.]+ KiB \| `[0-9a-f]{64}` \|",
+        f"| `install.sh` | {(ROOT / 'install.sh').stat().st_size / 1024:.1f} KiB "
+        f"| `{sha256(ROOT / 'install.sh')}` |",
     )
     text = replace_once(
         text,

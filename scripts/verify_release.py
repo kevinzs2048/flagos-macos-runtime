@@ -13,7 +13,7 @@ from macho_audit import audit_tree
 
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "0.1.0-alpha.1"
+VERSION = "0.1.0-alpha.2"
 RUNTIME_NAME = f"flagos-runtime-{VERSION}-darwin-arm64-m5pro"
 WHEELHOUSE_NAME = f"wheelhouse-{VERSION}"
 RUNTIME_ASSET = ROOT / "artifacts" / f"{RUNTIME_NAME}.tar.gz"
@@ -228,7 +228,7 @@ def verify_jit_helpers(runtime: Path) -> None:
 
 
 def verify_m5_profile(path: Path) -> None:
-    """Pin the validated MiniCPM prefill route in the shipped profile."""
+    """Pin the validated multi-model routes in the shipped M5 Pro profile."""
     profile = path.read_text(encoding="utf-8")
     required = (
         "export FLAGGEMS_ARM_Q4_G128_STEALING_PREFILL=1",
@@ -254,6 +254,67 @@ def verify_m5_profile(path: Path) -> None:
         raise RuntimeError(f"M5 Pro profile contains stale settings: {stale}")
 
 
+def verify_model_registry() -> None:
+    manifest = json.loads(
+        (ROOT / "runtime-manifest.json").read_text(encoding="utf-8")
+    )
+    source_lock = json.loads(
+        (ROOT / "sources.lock.json").read_text(encoding="utf-8")
+    )
+    if manifest.get("schema_version") != 2:
+        raise RuntimeError("Runtime manifest must use the multi-model schema")
+    if manifest.get("version") != VERSION:
+        raise RuntimeError("Runtime manifest version differs from release scripts")
+    if source_lock.get("runtime_version") != VERSION:
+        raise RuntimeError("source lock version differs from release scripts")
+    models = manifest.get("supported_models")
+    if not isinstance(models, list) or not models:
+        raise RuntimeError("Runtime manifest has no supported models")
+    names = [model.get("name") for model in models]
+    if any(not name for name in names) or len(names) != len(set(names)):
+        raise RuntimeError("supported model names must be non-empty and unique")
+    required = {
+        "name",
+        "architecture",
+        "inference_mode",
+        "modelscope_repo",
+        "variants",
+    }
+    for model in models:
+        missing = sorted(required - model.keys())
+        if missing:
+            raise RuntimeError(
+                f"supported model {model.get('name')} is missing fields: {missing}"
+            )
+        variants = model["variants"]
+        if not isinstance(variants, list) or not variants:
+            raise RuntimeError(f"supported model {model['name']} has no variants")
+        variant_names = [variant.get("name") for variant in variants]
+        if any(not name for name in variant_names) or len(variant_names) != len(
+            set(variant_names)
+        ):
+            raise RuntimeError(
+                f"supported model {model['name']} has invalid variant names"
+            )
+        for variant in variants:
+            missing_variant = {
+                "name",
+                "quantization",
+                "acceptance_evidence",
+            } - variant.keys()
+            if missing_variant:
+                raise RuntimeError(
+                    f"model variant {model['name']}/{variant.get('name')} is "
+                    f"missing fields: {sorted(missing_variant)}"
+                )
+            evidence = ROOT / variant["acceptance_evidence"]
+            if not evidence.is_file():
+                raise RuntimeError(
+                    f"model variant {model['name']}/{variant['name']} has no "
+                    f"acceptance evidence: {evidence}"
+                )
+
+
 def verify_provenance(runtime: Path) -> None:
     runtime_manifest = json.loads(
         (ROOT / "runtime-manifest.json").read_text(encoding="utf-8")
@@ -271,6 +332,7 @@ def verify_provenance(runtime: Path) -> None:
 
 
 def main() -> int:
+    verify_model_registry()
     verify_m5_profile(ROOT / "profiles" / "m5-pro.env")
     check_sidecar(RUNTIME_ASSET)
     check_sidecar(WHEELHOUSE_ASSET)

@@ -1,9 +1,9 @@
-# Building the FlagOS macOS W4A8 Runtime
+# Building the FlagOS macOS multi-model Runtime
 
-The build creates a self-contained Apple M5 Pro Runtime that exposes the
-standard `vllm` CLI. It applies the audited Darwin OpenMP and stock-Inductor
-AOT compatibility patches to an isolated copy of vLLM and does not include
-model weights.
+The build creates one self-contained Apple M5 Pro Runtime for every model in
+`runtime-manifest.json` and exposes the standard `vllm` CLI. It applies the
+audited Darwin OpenMP and stock-Inductor AOT compatibility patches to an
+isolated copy of vLLM and does not include model weights.
 
 ## Required inputs
 
@@ -44,7 +44,8 @@ export FLAGOS_NINJA=/path/to/ninja
    Darwin OpenMP enabled, and adds the pinned vLLM-Plugin-FL adapter.
 4. Installs the pinned Triton CPU and FlagGems Python sources.
 5. Rebuilds libtriton_jit and the FlagGems Q4/W8/GDN native operator bundle.
-6. Adds the single M5 Pro performance profile and standard `vllm` launcher.
+6. Adds the shared M5 Pro performance profile, supported-model manifest and
+   standard `vllm` launcher.
 7. Relocates all Mach-O dependencies and consolidates libomp.
 8. Creates the Runtime archive and four-wheel developer wheelhouse.
 9. Verifies checksums, archive paths, source provenance, Mach-O dependencies,

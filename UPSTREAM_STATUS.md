@@ -3,9 +3,9 @@
 `sources.lock.json` records an exact commit and tree for every component. The
 build materializes those commits from Git; local overrides must be clean and
 match both locked identifiers. All four non-vLLM component checkouts used by
-the MiniCPM Express package are on the local `minicpm-express` branch. The
-commits and trees are unchanged from the reviewed final candidate; the branch
-groups the exact package inputs without rewriting their history.
+the unified Express package are on the local `minicpm-express` branch. This
+integration branch descends from the Qwen3.8-27B Runtime base and groups the
+exact multi-model package inputs without rewriting their history.
 
 As of 2026-08-22, the Triton and FlagGems candidate refs are committed locally
 but are not present on the configured GitHub remotes. A source build must

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-VERSION=0.1.0-alpha.1
+VERSION=0.1.0-alpha.2
 ASSET="$ROOT/artifacts/flagos-runtime-$VERSION-darwin-arm64-m5pro.tar.gz"
 TEST_ROOT=$(/usr/bin/mktemp -d "${TMPDIR:-/tmp}/flagos-install-smoke.XXXXXX")
 

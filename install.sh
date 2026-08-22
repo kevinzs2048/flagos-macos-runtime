@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-VERSION=0.1.0-alpha.1
+VERSION=0.1.0-alpha.2
 APP_ROOT=${FLAGOS_INSTALL_ROOT:-"$HOME/Library/FlagOS"}
 ASSET=
 ACTION=install

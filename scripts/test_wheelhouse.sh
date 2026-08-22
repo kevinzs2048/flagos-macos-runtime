@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-VERSION=0.1.0-alpha.1
+VERSION=0.1.0-alpha.2
 RUNTIME="$ROOT/build/runtime-$VERSION/flagos-runtime-$VERSION-darwin-arm64-m5pro"
 PYTHON="$RUNTIME/python/bin/python3.11"
 ARCHIVE="$ROOT/artifacts/flagos-wheelhouse-$VERSION-cp311-darwin-arm64.tar.gz"

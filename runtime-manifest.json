@@ -1,7 +1,7 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "name": "flagos-macos-runtime",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0-alpha.2",
   "abi": "flagos-arm-w4a8-g128-v1",
   "platform": "darwin-arm64",
   "profile": "mac17_9-m5pro-64g",
@@ -12,20 +12,59 @@
   "flag_gems": "5.0.2",
   "plugin": "0.0.0+g2ccd0485a",
   "source_provenance": {
-    "lock_sha256": "13f6eb0e3a2ecd0da97184034e45041c5327023c767cb00ccf8377b580ca8ecd"
+    "lock_sha256": "dbda2ac2bf63f99809014099f1e1abe8e96aafb11c4faaaf6e55a656a1a6a869"
   },
   "unsigned_developer_candidate": true,
   "model_weights_included": false,
+  "release_lineage": {
+    "base_release": "v0.1.0-alpha.1",
+    "base_model": "Qwen3.8-27B-W4A8-arm-FlagOS-Express",
+    "integration_branch": "minicpm-express",
+    "policy": "single-runtime-multiple-models"
+  },
   "supported_models": [
     {
-      "name": "MiniCPM5-2.6B-W4A8-G128-FlagOS",
-      "quantization": "W4A8 GPTQ G128",
-      "modelscope_repo": "set-at-model-publication"
+      "name": "Qwen3.8-27B-W4A8-arm-FlagOS-Express",
+      "architecture": "Qwen3_5ForConditionalGeneration",
+      "inference_mode": "text-only",
+      "modelscope_repo": "FlagRelease/Qwen3.8-27B-W4A8-arm-FlagOS-Express",
+      "variants": [
+        {
+          "name": "W4A8 G128",
+          "quantization": "W4A8 GPTQ G128; BF16 lm_head prepared as W8A8",
+          "acceptance_evidence": "benchmarks/qwen38-g128-runtime-final.json"
+        }
+      ]
     },
     {
-      "name": "MiniCPM5-2.6B-W8A8-Channel-FlagOS",
-      "quantization": "W8A8 channel-wise",
-      "modelscope_repo": "set-at-model-publication"
+      "name": "MiniCPM5-2.6B-arm-FlagOS-Express",
+      "architecture": "LlamaForCausalLM",
+      "inference_mode": "text-only",
+      "modelscope_repo": "set-at-model-publication",
+      "variants": [
+        {
+          "name": "W4A8 G128",
+          "quantization": "W4A8 GPTQ G128",
+          "acceptance_evidence": "benchmarks/minicpm5-express-comparison-20260822.json"
+        },
+        {
+          "name": "W8A8 Channel",
+          "quantization": "W8A8 channel-wise",
+          "acceptance_evidence": "benchmarks/minicpm5-express-comparison-20260822.json"
+        }
+      ]
     }
-  ]
+  ],
+  "model_support_policy": {
+    "runtime_shared_across_models": true,
+    "model_weights_distributed_separately": true,
+    "new_model_requires": [
+      "manifest entry",
+      "documented vllm serve command",
+      "real HTTP correctness smoke",
+      "cold PP512/TG128/Total measurements",
+      "kernel-route coverage",
+      "regression review for existing supported models"
+    ]
+  }
 }

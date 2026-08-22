@@ -1,9 +1,10 @@
 # FlagOS macOS Runtime developer-alpha acceptance
 
 Acceptance host: Mac17,9 / Apple M5 Pro / 64 GiB / macOS 26.5.1. Runtime
-version: `0.1.0-alpha.1`; ABI: `flagos-arm-w4a8-g128-v1`. The MiniCPM Express
-release validates MiniCPM5-2.6B W4A8 G128 and channel-wise W8A8 text inference.
-The earlier Qwen3.8-27B W4A8 validation remains as compatibility evidence.
+version: `0.1.0-alpha.2`; ABI: `flagos-arm-w4a8-g128-v1`. This unified Express
+release formally supports Qwen3.8-27B W4A8, MiniCPM5-2.6B W4A8 G128 and
+MiniCPM5-2.6B channel-wise W8A8 text inference from one Runtime. It descends
+from the immutable Qwen release tag `v0.1.0-alpha.1`.
 
 This is an unsigned, non-notarized developer alpha. It is a native macOS CPU
 Runtime; no Docker or Metal path is used.
@@ -12,7 +13,7 @@ Runtime; no Docker or Metal path is used.
 
 - Stock vLLM is clean at upstream tag `v0.20.2`, commit `bc150f502`; no vLLM
   patch or Runtime-specific vLLM branch is shipped.
-- Triton CPU and FlagGems use the clean MiniCPM candidate commits recorded in
+- Triton CPU and FlagGems use the clean unified candidate commits recorded in
   `sources.lock.json`; vLLM-Plugin-FL and libtriton_jit remain on their clean
   `macos-arm-w4a8` commits.
 - The build materializes exact commits from Git and independently verifies each
@@ -27,9 +28,9 @@ Runtime; no Docker or Metal path is used.
 
 | Asset | Size | SHA256 |
 | --- | ---: | --- |
-| Runtime logical archive (10 checksummed Release parts) | 476.0 MiB | `d193c532bba77b275411367cf4445763369d4f70177b7323223eea912d45e9ca` |
-| `flagos-wheelhouse-0.1.0-alpha.1-cp311-darwin-arm64.tar.gz` | 81.1 MiB | `6949a9f6a85774b9331e57ec971865bf62294ea31c0fe97fe1e43bec918ac088` |
-| `install.sh` | 6.6 KiB | `ec3f279b54e70e7a5b7a299eff71cdf55cca6ca414fe235f8ed0a080f02cbc46` |
+| Runtime logical archive (10 checksummed Release parts) | 476.0 MiB | `55581da456950e6707285af162a56f4479773288cfa43ee97923b5a2491dc95b` |
+| `flagos-wheelhouse-0.1.0-alpha.2-cp311-darwin-arm64.tar.gz` | 81.1 MiB | `6eb7d9b1db3f6ba13068573f20ba8fb7edbcaeefa7e53491f6a8dc8d537bab0b` |
+| `install.sh` | 6.6 KiB | `10a3d3e7997d19dc6e002c70c6fd92368b89d409033dace84318c41792a1e08d` |
 
 Archive verification checked 42,580 Runtime files, 40,735 text files for host
 path relocation, 529 Mach-O images, safe archive paths, source provenance and
@@ -123,15 +124,17 @@ artifact, not a kernel regression, and is retained separately in
 three thermally cooled samples and requires 97% of both historical cold
 baselines, so performance and strict kernel coverage jointly pass.
 
-The simplified release retains the exact same five pinned engine component
-commits and performance knobs. `VLLM_CPU_OMP_THREADS_BIND=0`, which denoted CPU
-ID zero and was inert in the measured UniProc route, is now expressed accurately
-as `nobind`; OpenMP remains explicitly set to 14 threads. A final standard
-`vllm serve` smoke loaded this checkpoint, completed warmup, returned a normal
-Chinese completion, and ran pp512/tg128 at 78.40 ms TPOT (12.76 tok/s) without
-a cooldown interval. This is 2.4% below the retained 13.07 tok/s cooled median
-and inside the 3% regression gate. The final archive separately passed all
-Runtime hashes and direct native-op registration checks.
+The unified release retains the stock vLLM, vLLM-Plugin-FL and libtriton_jit
+commits from the Qwen base. Triton CPU and FlagGems advance to the commits in
+`sources.lock.json`; those commits preserve the Qwen G128/GDN routes while
+adding the MiniCPM W4/W8 routes. `VLLM_CPU_OMP_THREADS_BIND=0`, which denoted
+CPU ID zero and was inert in the measured UniProc route, is now expressed
+accurately as `nobind`; OpenMP remains explicitly set to 14 threads. A final
+standard `vllm serve` smoke loaded the Qwen checkpoint, completed warmup,
+returned a normal Chinese completion, and ran pp512/tg128 at 78.40 ms TPOT
+(12.76 tok/s) without a cooldown interval. This is 2.4% below the retained
+13.07 tok/s cooled median and inside the 3% regression gate. The final archive
+separately passed all Runtime hashes and direct native-op registration checks.
 
 ## Known boundaries
 
@@ -143,5 +146,6 @@ Runtime hashes and direct native-op registration checks.
   require the two clean local checkout overrides documented in `BUILDING.md`.
 - Python/Torch and the compiled vLLM/Triton compiler extensions come from the
   validated build environment rather than a fully hermetic CI rebuild.
-- The external model repository ID is intentionally maintained by the model
-  publication and is not embedded in this Runtime.
+- The published Qwen ModelScope ID is embedded in the supported-model registry;
+  the single MiniCPM publication ID must replace its placeholder before the
+  `v0.1.0-alpha.2` release is tagged.

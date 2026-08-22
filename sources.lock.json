@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "locked_at": "2026-08-22T20:15:00+08:00",
-  "runtime_version": "0.1.0-alpha.1",
+  "runtime_version": "0.1.0-alpha.2",
   "runtime_abi": "flagos-arm-w4a8-g128-v1",
   "source_policy": "materialize_exact_git_commits_at_build_time",
   "components": {

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-VERSION=0.1.0-alpha.1
+VERSION=0.1.0-alpha.2
 VLLM_SOURCE=${FLAGOS_VLLM_SOURCE:?Set FLAGOS_VLLM_SOURCE to the clean vLLM v0.20.2 source root}
 LIBOMP_ROOT=${FLAGOS_LIBOMP_ROOT:?Set FLAGOS_LIBOMP_ROOT to the relocatable libomp prefix}
 BUILD_PYTHON=${FLAGOS_BUILD_PYTHON:-$VLLM_SOURCE/.venv311/bin/python}
