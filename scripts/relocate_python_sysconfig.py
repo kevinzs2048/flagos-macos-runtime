@@ -50,15 +50,22 @@ def main() -> int:
             encoding="utf-8",
         )
 
-    numpy_config = args.python_root / "lib/python3.11/site-packages/numpy/__config__.py"
-    if numpy_config.is_file():
-        text = numpy_config.read_text(encoding="utf-8")
+    site_packages = args.python_root / "lib/python3.11/site-packages"
+    for package in ("numpy", "scipy"):
+        package_config = site_packages / package / "__config__.py"
+        if not package_config.is_file():
+            continue
+        text = package_config.read_text(encoding="utf-8")
+        # Binary wheels may retain an ephemeral PEP 517 build-environment
+        # prefix in their informational show_config() payload.  It is not a
+        # runtime search path, so replace the complete quoted value rather
+        # than leaking a host-specific /private/var/folders location.
         text = re.sub(
-            r'r?"/private/var/folders/[^\"]*"',
+            r'r?"[^"\n]*/private/var/folders/[^"\n]*"',
             '"build-environment"',
             text,
         )
-        numpy_config.write_text(text, encoding="utf-8")
+        package_config.write_text(text, encoding="utf-8")
     return 0
 
 
