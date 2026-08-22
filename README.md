@@ -1,9 +1,10 @@
-# FlagOS macOS W4A8 Runtime
+# FlagOS macOS W4A8/W8A8 Runtime
 
-Native Apple M5 Pro Runtime for Qwen3.8-27B W4A8 G128 inference with the
-standard vLLM CLI. It packages the validated Python environment, vLLM 0.20.2,
-Triton CPU, FlagGems, vLLM-Plugin-FL, libtriton_jit and the required native
-libraries. Model weights are downloaded separately.
+Native Apple M5 Pro Runtime for W4A8 G128 and channel-wise W8A8 inference with
+the standard vLLM CLI. The validated text-only models include Qwen3.8-27B W4A8
+and MiniCPM5-2.6B W4A8/W8A8. It packages the validated Python environment,
+vLLM 0.20.2, Triton CPU, FlagGems, vLLM-Plugin-FL, libtriton_jit and the
+required native libraries. Model weights are downloaded separately.
 
 This developer release targets Mac17,9 / Apple M5 Pro / 64 GiB. It uses the
 Arm CPU only; Metal is not used. The production G128 route uses SDOT/I8MM and
@@ -39,6 +40,33 @@ Runtime. The prebuilt Runtime is downloaded as independently checksummed
 avoids unreliable long-lived GitHub upload/download connections. The default
 install root is `~/Library/FlagOS`; paths containing whitespace are rejected
 because PyTorch Inductor cannot compile its CPU sampler against them.
+
+## Run MiniCPM5-2.6B
+
+The same Runtime serves both validated MiniCPM checkpoints. Select either the
+W4A8 G128 or channel-wise W8A8 directory and change only the served name.
+
+```bash
+MODEL="$HOME/Models/MiniCPM5-2.6B-W4A8-G128-FlagOS"
+NAME=minicpm5-w4a8
+
+vllm serve "$MODEL" \
+  --host 127.0.0.1 \
+  --port 8000 \
+  --served-model-name "$NAME" \
+  --max-model-len 8192 \
+  --max-num-batched-tokens 2048 \
+  --max-num-seqs 1 \
+  --language-model-only \
+  --generation-config vllm \
+  --distributed-executor-backend uni \
+  --disable-log-stats \
+  --compilation-config '{"mode":3}'
+```
+
+For W8A8, use `MiniCPM5-2.6B-W8A8-Channel-FlagOS` and
+`NAME=minicpm5-w8a8`. No GPU or Metal memory option is required; this is the
+Arm CPU path.
 
 ## Run Qwen3.8-27B
 

@@ -1,8 +1,9 @@
 # FlagOS macOS Runtime developer-alpha acceptance
 
 Acceptance host: Mac17,9 / Apple M5 Pro / 64 GiB / macOS 26.5.1. Runtime
-version: `0.1.0-alpha.1`; ABI: `flagos-arm-w4a8-g128-v1`. The tested model is
-`Qwen3.8-27B-W4A8-GPTQ-G128-packed`.
+version: `0.1.0-alpha.1`; ABI: `flagos-arm-w4a8-g128-v1`. The original release
+model is `Qwen3.8-27B-W4A8-GPTQ-G128-packed`; the final candidate additionally
+validates MiniCPM5-2.6B W4A8 G128 and channel-wise W8A8 text inference.
 
 This is an unsigned, non-notarized developer alpha. It is a native macOS CPU
 Runtime; no Docker or Metal path is used.
@@ -11,8 +12,9 @@ Runtime; no Docker or Metal path is used.
 
 - Stock vLLM is clean at upstream tag `v0.20.2`, commit `bc150f502`; no vLLM
   patch or Runtime-specific vLLM branch is shipped.
-- Triton CPU, FlagGems, vLLM-Plugin-FL and libtriton_jit use clean
-  `macos-arm-w4a8` commits recorded in `sources.lock.json`.
+- Triton CPU and FlagGems use the clean MiniCPM candidate commits recorded in
+  `sources.lock.json`; vLLM-Plugin-FL and libtriton_jit remain on their clean
+  `macos-arm-w4a8` commits.
 - The build materializes exact commits from Git and independently verifies each
   tree ID. Generated source trees are ignored build inputs rather than a second
   155 MB copy committed to this repository.
@@ -25,17 +27,19 @@ Runtime; no Docker or Metal path is used.
 
 | Asset | Size | SHA256 |
 | --- | ---: | --- |
-| Runtime logical archive (9 checksummed Release parts) | 432.0 MiB | `f811f14295e24a305c1296225707059891df958e229a964a1e6c117a76e37bbe` |
-| `flagos-wheelhouse-0.1.0-alpha.1-cp311-darwin-arm64.tar.gz` | 81.1 MiB | `876f251951f996ca87c16a41e135a0be2e9add08bf86bc24936bacc6507c03d7` |
+| Runtime logical archive (11 checksummed Release parts) | 512.4 MiB | `5a8d731bb2575e318de54d45be6dc8ea670c2fa3a7bd2e5b79db6db39195d87f` |
+| `flagos-wheelhouse-0.1.0-alpha.1-cp311-darwin-arm64.tar.gz` | 81.1 MiB | `07fd92e0a48bae7a08b1c51a436d3b6eb0bffed416680401c45894a8c7ed344a` |
 | `install.sh` | 6.6 KiB | `ec3f279b54e70e7a5b7a299eff71cdf55cca6ca414fe235f8ed0a080f02cbc46` |
 
-Archive verification checked 39,253 Runtime files, 38,186 text files for host
-path relocation, 333 Mach-O images, safe archive paths, source provenance and
+Archive verification checked 47,395 Runtime files, 45,136 text files for host
+path relocation, 529 Mach-O images, safe archive paths, source provenance and
 all checksum sidecars. The packaged `gen_ssig` and `standalone_compile` JIT
 helpers also passed an import probe. There are no developer absolute load paths
 and all OpenMP references resolve to one Runtime image. The inference stack is
 precompiled to relocatable Python 3.11 bytecode for predictable cold startup.
-The wheelhouse contains exactly four verified component wheels.
+The wheelhouse contains exactly four verified component wheels. NumPy/SciPy
+informational build metadata contains no ephemeral host paths, and dependencies
+from Torch and scikit-learn resolve to the same single Runtime OpenMP image.
 
 The isolated end-user workflow passed install, activation, standard
 `vllm --version`, standard `vllm serve --help`, rollback and active-version
@@ -73,6 +77,22 @@ Strict coverage from a real request passed all checks:
 - Q4 G128 prefill/decode and W8 `lm_head` hit FlagGems kernels.
 - GDN prefill/decode and CPU attention backends were observed.
 - Attention, Q4 body, W8 head and all GDN fallback counters were zero.
+
+For MiniCPM5, the final packaged Arm operator bundle passed all nine numerical
+W4/W8 runtime tests: regular versus coarse-stripe equality, decode
+repeatability, thread-scope restoration, AOT Parameter identity and the
+symmetric W8 activation/compact-RHS contract. Triton CPU was rebuilt before
+testing; all three related `TritonCPU/kai-layout` lowering tests passed. The
+FlagGems source file used by the clean repository, Runtime archive and
+developer wheel is byte-identical. The final dylib links only libtriton_jit,
+Torch, OpenMP and system libraries; it has no KleidiAI/TLE compute dependency.
+
+The most recent accepted MiniCPM5 single-stream HTTP baselines are W4A8
+PP512 959.42 tok/s, TG128 89.34 tok/s and Total 327.19 tok/s; W8A8 is about
+PP512 1144.7 tok/s, TG128 65.8 tok/s and Total 268.22 tok/s. These measurements
+use the exact locked source candidate, `vllm serve`, concurrency 1 and disabled
+prefix caching. A final thermally cooled run of the packaged archive remains a
+performance gate rather than being inferred from numerical unit tests.
 
 ## Batch-one HTTP performance
 
