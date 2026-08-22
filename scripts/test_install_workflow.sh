@@ -30,7 +30,11 @@ case "$VERSION_OUTPUT" in
   *0.20.2*) ;;
   *) echo "installed Runtime reports the wrong vLLM version: $VERSION_OUTPUT" >&2; exit 2 ;;
 esac
-/usr/bin/perl -e 'alarm shift; exec @ARGV' 180 "$COMMAND" serve --help >/dev/null
+# A first launch from a freshly extracted Runtime can spend more than two
+# minutes in macOS cold-file validation while importing the full vLLM command
+# graph. Keep this bounded, but leave enough room for the observed 143-second
+# cold path on the release host.
+/usr/bin/perl -e 'alarm shift; exec @ARGV' 300 "$COMMAND" serve --help >/dev/null
 
 /bin/bash "$ROOT/install.sh" --rollback "$VERSION" >/dev/null
 if /bin/bash "$ROOT/install.sh" --uninstall "$VERSION" \

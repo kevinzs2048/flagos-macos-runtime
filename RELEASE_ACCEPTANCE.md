@@ -27,16 +27,20 @@ Runtime; no Docker or Metal path is used.
 
 | Asset | Size | SHA256 |
 | --- | ---: | --- |
-| Runtime logical archive (11 checksummed Release parts) | 512.4 MiB | `a618d2d2c1891a0e83f49cfe4eeef19bbf5362a72e72b4a794184bcfe9950c20` |
-| `flagos-wheelhouse-0.1.0-alpha.1-cp311-darwin-arm64.tar.gz` | 81.1 MiB | `e331beebc671617f6a8f823057378508662f4a8547fd3a4f45c817dc75adcb9b` |
+| Runtime logical archive (10 checksummed Release parts) | 476.0 MiB | `d193c532bba77b275411367cf4445763369d4f70177b7323223eea912d45e9ca` |
+| `flagos-wheelhouse-0.1.0-alpha.1-cp311-darwin-arm64.tar.gz` | 81.1 MiB | `6949a9f6a85774b9331e57ec971865bf62294ea31c0fe97fe1e43bec918ac088` |
 | `install.sh` | 6.6 KiB | `ec3f279b54e70e7a5b7a299eff71cdf55cca6ca414fe235f8ed0a080f02cbc46` |
 
-Archive verification checked 47,395 Runtime files, 45,136 text files for host
+Archive verification checked 42,580 Runtime files, 40,735 text files for host
 path relocation, 529 Mach-O images, safe archive paths, source provenance and
 all checksum sidecars. The packaged `gen_ssig` and `standalone_compile` JIT
 helpers also passed an import probe. There are no developer absolute load paths
 and all OpenMP references resolve to one Runtime image. The inference stack is
 precompiled to relocatable Python 3.11 bytecode for predictable cold startup.
+Nested dependency test suites, `.dSYM` bundles and the 63 MiB XGrammar static
+development library are absent. `libtvm_ffi_testing.dylib` is retained because
+the published `tvm_ffi/core` extension links it as a Runtime dependency; the
+release verifier imports both `tvm_ffi` and XGrammar explicitly.
 The wheelhouse contains exactly four verified component wheels. NumPy/SciPy
 informational build metadata contains no ephemeral host paths, and dependencies
 from Torch and scikit-learn resolve to the same single Runtime OpenMP image.

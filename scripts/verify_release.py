@@ -178,6 +178,28 @@ def verify_text_relocation(runtime: Path) -> int:
     return checked
 
 
+def verify_no_release_residue(runtime: Path) -> None:
+    """Reject test, debug and link-time-only files from the end-user Runtime."""
+    forbidden_files = {
+        Path("python/lib/python3.11/site-packages/xgrammar/lib/libxgrammar.a"),
+    }
+    violations: list[str] = []
+    for path in runtime.rglob("*"):
+        relative = path.relative_to(runtime)
+        forbidden_directory = path.name in {"test", "tests"} or path.name.endswith(
+            ".dSYM"
+        )
+        if path.is_dir() and forbidden_directory:
+            violations.append(str(relative))
+        elif path.is_file() and relative in forbidden_files:
+            violations.append(str(relative))
+    if violations:
+        raise RuntimeError(
+            "Runtime contains test/debug/development residue: "
+            + "; ".join(violations[:10])
+        )
+
+
 def verify_jit_helpers(runtime: Path) -> None:
     """Ensure libtriton_jit has its relocatable Python runtime resources."""
     script_dir = runtime / "share" / "triton_jit" / "scripts"
@@ -222,6 +244,14 @@ def verify_m5_profile(path: Path) -> None:
     missing = [setting for setting in required if setting not in profile]
     if missing:
         raise RuntimeError(f"M5 Pro profile is missing validated settings: {missing}")
+    forbidden = (
+        "FLAGGEMS_Q4_FUSED_LLAMA_SWIGLU_DOWN",
+        "TORCH_CACHING_PRECOMPILE",
+        "TORCH_STRICT_PRECOMPILE",
+    )
+    stale = [setting for setting in forbidden if setting in profile]
+    if stale:
+        raise RuntimeError(f"M5 Pro profile contains stale settings: {stale}")
 
 
 def verify_provenance(runtime: Path) -> None:
@@ -255,6 +285,7 @@ def main() -> int:
             archive.extractall(temp)
         runtime = temp / RUNTIME_NAME
         checked_files = verify_runtime_hashes(runtime)
+        verify_no_release_residue(runtime)
         checked_text_files = verify_text_relocation(runtime)
         verify_jit_helpers(runtime)
         verify_m5_profile(runtime / "share" / "flagos" / "m5-pro.env")
@@ -300,7 +331,7 @@ def main() -> int:
                 str(runtime / "python/bin/python3.11"),
                 "-c",
                 (
-                    "import torch; "
+                    "import torch, tvm_ffi, xgrammar; "
                     "torch.ops.load_library(r'"
                     + str(site / "flag_gems/csrc/arm/libflag_gems_arm_ops.dylib")
                     + "'); "

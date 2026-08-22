@@ -183,6 +183,19 @@ find "$SITE" -maxdepth 1 -type d \
      -o -name 'flagos_macos_runtime_build_tools-*.dist-info' \) \
   -exec /bin/rm -rf -- {} +
 find "$SITE" -path '*/direct_url.json' -delete
+# Runtime archives must not inherit nested dependency test suites, debug
+# bundles, or link-time-only libraries from the developer build environment.
+# Keep the removals explicit: other static libraries in the embedded Python
+# distribution can be part of its normal installation layout.
+find "$SITE" -type d \( -name test -o -name tests \) -prune \
+  -exec /bin/rm -rf -- {} +
+find "$STAGE" -type d -name '*.dSYM' -prune \
+  -exec /bin/rm -rf -- {} +
+/bin/rm -f -- \
+  "$SITE/xgrammar/lib/libxgrammar.a"
+# Despite its name, tvm_ffi/core.cpython-311-darwin.so links against
+# libtvm_ffi_testing.dylib in the published wheel. It is a Runtime dependency
+# and must remain until that upstream wheel removes the load command.
 # Finder metadata is not part of any Python distribution and can appear in a
 # developer site-packages tree between otherwise identical builds.
 find "$STAGE" -type f -name '.DS_Store' -delete
