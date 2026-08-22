@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "locked_at": "2026-08-22T10:59:00+08:00",
+  "locked_at": "2026-08-22T18:24:51+08:00",
   "runtime_version": "0.1.0-alpha.1",
   "runtime_abi": "flagos-arm-w4a8-g128-v1",
   "source_policy": "materialize_exact_git_commits_at_build_time",
@@ -23,8 +23,8 @@
       "url": "https://github.com/kevinzs2048/FlagGems.git",
       "version": "5.0.2",
       "branch": "codex/minicpm5-final-candidate",
-      "commit": "ac73d54fa246f45dbcd829a8979732a4f06837e3",
-      "tree": "c78bd1a76e50411e6feea5c902aadf5f1caee273"
+      "commit": "a892d50cbc70c8a02333002b624bc426e0ca9b14",
+      "tree": "879099fcebf4928372cc51aa76db514644079bf8"
     },
     "libtriton_jit": {
       "url": "https://github.com/kevinzs2048/libtriton_jit.git",

@@ -12,7 +12,7 @@
   "flag_gems": "5.0.2",
   "plugin": "0.0.0+g2ccd0485a",
   "source_provenance": {
-    "lock_sha256": "9bc8909d73eced4d1700b152ca40d55b4fc985a7d5de5fc35fe151734f722c58"
+    "lock_sha256": "ee76d28e45aca7114b1f7f6de4aef0185f4bca3263491b4ece7deb1d3d61f9f3"
   },
   "unsigned_developer_candidate": true,
   "model_weights_included": false,

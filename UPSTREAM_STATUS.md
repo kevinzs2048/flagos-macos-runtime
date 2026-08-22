@@ -18,7 +18,7 @@ materialization without changing the candidate source.
 | --- | --- | --- |
 | vLLM 0.20.2 | Framework, CPU attention and compressed-tensors model loading | Stock `v0.20.2` commit `bc150f502`, plus audited Darwin OpenMP and stock-Inductor AOT patches during the isolated build |
 | vLLM-Plugin-FL | Thin vLLM platform/kernel registration and version-locked compatibility hooks | `macos-arm-w4a8` at `2ccd0485`; unchanged by the MiniCPM optimization |
-| FlagGems 5.0.2 | Triton W4/W8 pack and kernels, Arm operator binding and process-local JIT cache locks | `codex/minicpm5-final-candidate` at `ac73d54f` |
+| FlagGems 5.0.2 | Triton W4/W8 pack and kernels, Arm operator binding and process-local JIT cache locks | `codex/minicpm5-final-candidate` at `a892d50c` |
 | Triton CPU 3.7.2 | Apple Arm CPU lowering, SDOT/I8MM and native M16 accumulator preservation | `codex/minicpm5-g128-m16-prefill` at `1feeab7e` |
 | libtriton_jit 0.1.0 | CPU JIT launch ABI and OpenMP scheduling | `macos-arm-w4a8` at `a4eb4db9`; no local change |
 | Runtime wrapper/profile | Source materialization, M5 Pro W4/W8 policy, standard vLLM launcher and installer | This repository; current branch `codex/minicpm5-final-candidate` |
@@ -46,6 +46,11 @@ Review the compiler change before the FlagGems series:
    scoped guard across W4 prefill routes.
 10. FlagGems `ac73d54f`: preserve the prepared Q4 Parameter identity through
     joint layer/kernel AOT deepcopy.
+11. FlagGems `25657c75`: separate W8 Prefill and Decode scheduling so coarse
+    N-stripe I8MM work does not perturb the M=1 SDOT hot path.
+12. FlagGems `a892d50c`: honor the checkpoint's symmetric activation contract,
+    remove the obsolete asymmetric W8 packing route and cover the compact RHS
+    layout with direct runtime tests.
 
 The combined candidate builds cleanly as one Arm operator bundle. Direct tests
 cover W4 G128, W4 G32 compact/SwiGLU, W8 decode/prefill, regular/coarse-stripe
