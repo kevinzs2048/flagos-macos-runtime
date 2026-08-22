@@ -119,11 +119,19 @@ def main() -> int:
                 str(path),
             )
             changes += 1
-        for old in dependencies(path):
+        linked_libraries = dependencies(path)
+        for old in linked_libraries:
             replacement = None
             if old.endswith("libpython3.11.dylib") and not old.startswith("@"):
                 replacement = "@rpath/libpython3.11.dylib"
-            elif old.endswith("libomp.dylib") and not old.startswith("@"):
+            elif (
+                old.endswith("libomp.dylib")
+                and old != "@rpath/libomp.dylib"
+            ):
+                # Wheels such as scikit-learn may bundle OpenMP under an
+                # @loader_path install name.  Normalize those references too;
+                # the embedded Python executable supplies Runtime/lib on its
+                # LC_RPATH, so every extension resolves the one shipped image.
                 replacement = "@rpath/libomp.dylib"
             elif old.startswith("/") and not old.startswith(("/usr/lib/", "/System/")):
                 candidates = by_name.get(Path(old).name, [])
@@ -155,6 +163,9 @@ def main() -> int:
                 str(path),
             )
         add_rpath(path, "@loader_path")
+        if any(old.endswith("libomp.dylib") for old in linked_libraries):
+            runtime_lib = os.path.relpath(root / "lib", path.parent)
+            add_rpath(path, f"@loader_path/{runtime_lib}")
 
     python = root / "python" / "bin" / "python3.11"
     if python.is_file():

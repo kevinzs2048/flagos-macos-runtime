@@ -235,8 +235,9 @@ for library in libreadline.8.dylib libreadline.8.2.dylib; do
   /bin/ln -s "../python/readline/lib/$library" "$STAGE/lib/$library"
 done
 
-# Keep one physical OpenMP image. Torch's expected relative location resolves
-# to the Runtime-owned dylib.
+# Keep one physical OpenMP image. Some dependency wheels bundle private copies;
+# relocate_macho.py normalizes their load commands to @rpath/libomp.dylib.
+find "$SITE" -type f -name 'libomp*.dylib' -delete
 /bin/rm -f -- "$SITE/torch/lib/libomp.dylib"
 /bin/ln -s ../../../../../../lib/libomp.dylib "$SITE/torch/lib/libomp.dylib"
 
