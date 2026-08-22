@@ -7,21 +7,19 @@ the unified Express package are on the local `minicpm-express` branch. This
 integration branch descends from the Qwen3.8-27B Runtime base and groups the
 exact multi-model package inputs without rewriting their history.
 
-As of 2026-08-22, the Triton and FlagGems candidate refs are committed locally
-but are not present on the configured GitHub remotes. A source build must
-therefore set `FLAGOS_TRITON_SOURCE` and `FLAGOS_FLAGGEMS_SOURCE` to these clean
-checkouts. No remote push is performed implicitly by the release build. Once
-maintainers publish the refs, the same commit/tree lock can use network
-materialization without changing the candidate source.
+As of 2026-08-23, all four component `minicpm-express` refs are published on
+their configured GitHub repositories. A networked source build can materialize
+the locked commits directly; local overrides remain available for offline
+builds. No remote push is ever performed implicitly by the release build.
 
 | Component | Responsibility | Candidate state |
 | --- | --- | --- |
 | vLLM 0.20.2 | Framework, CPU attention and compressed-tensors model loading | Stock `v0.20.2` commit `bc150f502`, plus audited Darwin OpenMP and stock-Inductor AOT patches during the isolated build |
-| vLLM-Plugin-FL | Thin vLLM platform/kernel registration and version-locked compatibility hooks | local `minicpm-express` at `2ccd0485`; unchanged by the MiniCPM optimization |
-| FlagGems 5.0.2 | Triton W4/W8 pack and kernels, Arm operator binding and process-local JIT cache locks | local `minicpm-express` at `a892d50c` |
-| Triton CPU 3.7.2 | Apple Arm CPU lowering, SDOT/I8MM and native M16 accumulator preservation | local `minicpm-express` at `1feeab7e` |
-| libtriton_jit 0.1.0 | CPU JIT launch ABI and OpenMP scheduling | local `minicpm-express` at `a4eb4db9`; no code change |
-| Runtime wrapper/profile | Source materialization, M5 Pro W4/W8 policy, standard vLLM launcher and installer | local `minicpm-express` |
+| vLLM-Plugin-FL | Thin vLLM platform/kernel registration and version-locked compatibility hooks | published `minicpm-express` at `2ccd0485`; unchanged by the MiniCPM optimization |
+| FlagGems 5.0.2 | Triton W4/W8 pack and kernels, Arm operator binding and process-local JIT cache locks | published `minicpm-express` at `09c2947d` |
+| Triton CPU 3.7.2 | Apple Arm CPU lowering, SDOT/I8MM and native M16 accumulator preservation | published `minicpm-express` at `1feeab7e` |
+| libtriton_jit 0.1.0 | CPU JIT launch ABI and OpenMP scheduling | published `minicpm-express` at `a4eb4db9`; no code change |
+| Runtime wrapper/profile | Source materialization, M5 Pro W4/W8 policy, standard vLLM launcher and installer | release candidate branch `minicpm-express` |
 
 ## Review order and measured effect
 
@@ -51,6 +49,8 @@ Review the compiler change before the FlagGems series:
 12. FlagGems `a892d50c`: honor the checkpoint's symmetric activation contract,
     remove the obsolete asymmetric W8 packing route and cover the compact RHS
     layout with direct runtime tests.
+13. FlagGems `09c2947d`: remove retired W8 exports and make the AArch64 runtime
+    tests auto-discover packaged libraries, including compact Prefill tails.
 
 The combined candidate builds cleanly as one Arm operator bundle. Direct tests
 cover W4 G128, W4 G32 compact/SwiGLU, W8 decode/prefill, regular/coarse-stripe
@@ -78,7 +78,7 @@ The retired `vllm_triton_cpu_qwen35` package, standalone
 `libtriton_jit_q4_op.dylib` and TLE/KleidiAI compute routes are deliberately not
 part of this candidate. Q4/W8 ship as Triton kernels through the versioned
 FlagGems tree and one thin `libflag_gems_arm_ops.dylib` launcher linked to the
-versioned libtriton_jit runtime.  Runtime-specific framework changes are kept
+versioned libtriton_jit runtime. Runtime-specific framework changes are kept
 as the three reviewable files under `patches/`: Darwin OpenMP, finalized vLLM
 AOT artifact loading, and the Torch Inductor token-parallel guard.
 

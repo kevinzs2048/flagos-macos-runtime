@@ -22,6 +22,72 @@ WHEELHOUSE_ASSET = (
 )
 RUNTIME_PARTS_MANIFEST = Path(str(RUNTIME_ASSET) + ".parts")
 
+NATIVE_OPERATOR_SMOKE = r"""
+import os
+
+import torch
+import tvm_ffi  # noqa: F401
+import xgrammar  # noqa: F401
+
+from flag_gems.csrc.arm import configure_runtime
+from flag_gems.runtime.backend._arm.q4.linear import (
+    pack_rhs_qsi4c128p_asym,
+    pack_rhs_w8_symmetric,
+)
+
+torch.ops.load_library(str(configure_runtime().resolve()))
+required = (
+    "q4_linear_g128",
+    "q4_linear_g128_pair",
+    "w8_linear_kai",
+    "gdn_packed_decode",
+    "gdn_prefill",
+    "gdn_conv1d_prefill",
+    "gdn_rmsnorm_gated",
+    "launch_profile_start",
+    "launch_profile_stop",
+)
+missing = [
+    name for name in required if not hasattr(torch.ops.triton_jit_cpu, name)
+]
+assert not missing, missing
+
+torch.manual_seed(20260822)
+torch.set_num_threads(2)
+n, k = 64, 128
+
+q4_weight = torch.randint(-8, 8, (n, k), dtype=torch.int8)
+q4_scale = 0.001 + 0.02 * torch.rand(n, k // 128)
+q4_rhs = pack_rhs_qsi4c128p_asym(q4_weight, q4_scale)
+q4_x = torch.randn((32, k), dtype=torch.bfloat16)
+os.environ["FLAGGEMS_ARM_Q4_G128_STEALING_PREFILL"] = "0"
+q4_regular = torch.ops.triton_jit_cpu.q4_linear_g128(q4_x, q4_rhs, n, k)
+os.environ["FLAGGEMS_ARM_Q4_G128_STEALING_PREFILL"] = "1"
+os.environ["FLAGGEMS_ARM_Q4_G128_STEAL_CHUNK"] = "2"
+q4_stealing = torch.ops.triton_jit_cpu.q4_linear_g128(q4_x, q4_rhs, n, k)
+torch.testing.assert_close(q4_stealing, q4_regular, rtol=0, atol=0)
+
+w8_weight = torch.randint(-127, 128, (n, k), dtype=torch.int8)
+w8_scale = 0.001 + 0.02 * torch.rand(n)
+w8_rhs = pack_rhs_w8_symmetric(w8_weight, w8_scale)
+w8_x = torch.randn((32, k), dtype=torch.bfloat16)
+os.environ["FLAGGEMS_W8_STEALING_PREFILL"] = "0"
+w8_regular = torch.ops.triton_jit_cpu.w8_linear_kai(w8_x, w8_rhs, n, k)
+os.environ["FLAGGEMS_W8_STEALING_PREFILL"] = "1"
+os.environ["FLAGGEMS_W8_PREFILL_STEAL_CHUNK"] = "2"
+w8_stealing = torch.ops.triton_jit_cpu.w8_linear_kai(w8_x, w8_rhs, n, k)
+torch.testing.assert_close(w8_stealing, w8_regular, rtol=0, atol=0)
+
+values = w8_x.to(torch.float32)
+absmax = values.abs().amax(dim=-1, keepdim=True).clamp_min(1.0e-8)
+quantized = torch.round(values * (127.0 / absmax)).clamp_(-127, 127)
+reference = (
+    (quantized @ w8_weight.to(torch.float32).T)
+    * ((absmax / 127.0) * w8_scale.to(torch.float32)[None, :])
+).to(torch.bfloat16)
+torch.testing.assert_close(w8_regular, reference, rtol=0.02, atol=0.125)
+"""
+
 
 def sha256(path: Path) -> str:
     digest = hashlib.sha256()
@@ -229,29 +295,87 @@ def verify_jit_helpers(runtime: Path) -> None:
 
 def verify_m5_profile(path: Path) -> None:
     """Pin the validated multi-model routes in the shipped M5 Pro profile."""
-    profile = path.read_text(encoding="utf-8")
-    required = (
-        "export FLAGGEMS_ARM_Q4_G128_STEALING_PREFILL=1",
-        "export FLAGGEMS_ARM_Q4_G128_PREFILL_BLOCK_M=16",
-        "export FLAGGEMS_ARM_Q4_G128_PREFILL_SUBGROUP_UNROLL=1",
-        "export FLAGGEMS_W8_STEALING_PREFILL=1",
-        "export FLAGGEMS_W8_PREFILL_THREADS",
-        "export FLAGGEMS_W8_STEALING_DECODE=1",
-        "export FLAGGEMS_W8_STEALING_MIN_WORK",
-        "export FLAGGEMS_W8_BODY_STEAL_CHUNK",
-        "export FLAGGEMS_VLLM_FAST_APPLY=1",
+    expected = {
+        "FLAGGEMS_ARM_Q4_G128_PREFILL_BLOCK_M": "16",
+        "FLAGGEMS_ARM_Q4_G128_PREFILL_SUBGROUP_UNROLL": "1",
+        "FLAGGEMS_ARM_Q4_G128_STEALING_DECODE": "1",
+        "FLAGGEMS_ARM_Q4_G128_STEALING_PREFILL": "1",
+        "FLAGGEMS_ARM_Q4_G128_STEAL_CHUNK": "2",
+        "FLAGGEMS_ARM_Q4_G128_SWIGLU_STEALING": "0",
+        "FLAGGEMS_ARM_Q4_STRICT": "1",
+        "FLAGGEMS_GDN_PREFILL_THREADS": "16",
+        "FLAGGEMS_GDN_TRITON_BLOCK_KEY": "32",
+        "FLAGGEMS_GDN_TRITON_DECODE": "1",
+        "FLAGGEMS_GDN_TRITON_THREADS": "14",
+        "FLAGGEMS_Q4_DECODE_PARTITIONS": "auto",
+        "FLAGGEMS_Q4_PREFILL_THREADS": "18",
+        "FLAGGEMS_Q4_STEAL_CHUNK": "32",
+        "FLAGGEMS_VENDOR": "arm",
+        "FLAGGEMS_VLLM_FAST_APPLY": "1",
+        "FLAGGEMS_W8_BODY_STEAL_CHUNK": "32",
+        "FLAGGEMS_W8_PREFILL_STEAL_CHUNK": "2",
+        "FLAGGEMS_W8_PREFILL_THREADS": "16",
+        "FLAGGEMS_W8_STEALING_DECODE": "1",
+        "FLAGGEMS_W8_STEALING_MIN_WORK": "0",
+        "FLAGGEMS_W8_STEALING_PREFILL": "1",
+        "FLAGGEMS_W8_STEAL_CHUNK": "64",
+        "FLAGOS_INDUCTOR_TOKEN_PARALLEL_GUARD": "1",
+        "FL_CPU_INT4": "1",
+        "FL_CPU_INT4_BACKEND": "libtriton_jit",
+        "FL_CPU_UNIPROC": "1",
+        "FL_INT8_LMHEAD": "1",
+        "KMP_BLOCKTIME": "20",
+        "OMP_NUM_THREADS": "14",
+        "TOKENIZERS_PARALLELISM": "false",
+        "TRITON_JIT_CPU_DYNAMIC_CHUNK": "32",
+        "TRITON_JIT_CPU_DYNAMIC_KERNEL": "_q4_prefill_asym_g128_i8mm_kernel",
+        "TRITON_LOCAL_LIBOMP_PATH": "/runtime",
+        "VLLM_CPU_ATTN_SPLIT_KV": "0",
+        "VLLM_CPU_KVCACHE_SPACE": "2",
+        "VLLM_CPU_OMP_THREADS_BIND": "nobind",
+        "VLLM_ENABLE_FLA_PACKED_RECURRENT_DECODE": "1",
+        "VLLM_ENABLE_V1_MULTIPROCESSING": "0",
+        "VLLM_PLUGINS": "fl",
+    }
+    probe = subprocess.run(
+        [
+            "/bin/sh",
+            "-c",
+            '. "$1"; /usr/bin/env',
+            "verify-profile",
+            str(path.resolve()),
+        ],
+        env={"FLAGOS_RUNTIME_ROOT": "/runtime"},
+        text=True,
+        capture_output=True,
+        check=False,
+        timeout=30,
     )
-    missing = [setting for setting in required if setting not in profile]
-    if missing:
-        raise RuntimeError(f"M5 Pro profile is missing validated settings: {missing}")
-    forbidden = (
-        "FLAGGEMS_Q4_FUSED_LLAMA_SWIGLU_DOWN",
-        "TORCH_CACHING_PRECOMPILE",
-        "TORCH_STRICT_PRECOMPILE",
+    if probe.returncode:
+        raise RuntimeError(f"M5 Pro profile cannot be loaded: {probe.stderr}")
+    exported = dict(
+        line.split("=", 1) for line in probe.stdout.splitlines() if "=" in line
     )
-    stale = [setting for setting in forbidden if setting in profile]
-    if stale:
-        raise RuntimeError(f"M5 Pro profile contains stale settings: {stale}")
+    prefixes = ("FLAGGEMS_", "FLAGOS_", "FL_", "TRITON_", "VLLM_")
+    managed = {
+        key: value
+        for key, value in exported.items()
+        if key.startswith(prefixes)
+        or key in {"KMP_BLOCKTIME", "OMP_NUM_THREADS", "TOKENIZERS_PARALLELISM"}
+    }
+    managed.pop("FLAGOS_RUNTIME_ROOT", None)
+    if managed != expected:
+        missing = sorted(expected.keys() - managed.keys())
+        unexpected = sorted(managed.keys() - expected.keys())
+        mismatched = {
+            key: {"expected": expected[key], "actual": managed[key]}
+            for key in sorted(expected.keys() & managed.keys())
+            if expected[key] != managed[key]
+        }
+        raise RuntimeError(
+            "M5 Pro profile differs from the validated environment: "
+            f"missing={missing}, unexpected={unexpected}, mismatched={mismatched}"
+        )
 
 
 def verify_model_registry() -> None:
@@ -277,7 +401,6 @@ def verify_model_registry() -> None:
         "name",
         "architecture",
         "inference_mode",
-        "modelscope_repo",
         "variants",
     }
     for model in models:
@@ -375,6 +498,7 @@ def main() -> int:
         probe_env = dict(os.environ)
         probe_env.update(
             {
+                "FLAGGEMS_VENDOR": "arm",
                 "PYTHONHOME": str(runtime / "python"),
                 "PYTHONPATH": str(site),
                 "DYLD_LIBRARY_PATH": os.pathsep.join(
@@ -388,28 +512,23 @@ def main() -> int:
                 ),
             }
         )
+        for variable in (
+            "FLAGGEMS_LIBTRITON_JIT_Q4_OP",
+            "FLAGGEMS_Q4_KERNEL_SOURCE",
+            "FLAGGEMS_W8_KERNEL_SOURCE",
+        ):
+            probe_env.pop(variable, None)
         native_probe = subprocess.run(
             [
                 str(runtime / "python/bin/python3.11"),
                 "-c",
-                (
-                    "import torch, tvm_ffi, xgrammar; "
-                    "torch.ops.load_library(r'"
-                    + str(site / "flag_gems/csrc/arm/libflag_gems_arm_ops.dylib")
-                    + "'); "
-                    "required=('q4_linear_g128','q4_linear_g128_pair',"
-                    "'w8_linear_kai','gdn_packed_decode','gdn_prefill',"
-                    "'gdn_conv1d_prefill','gdn_rmsnorm_gated',"
-                    "'launch_profile_start','launch_profile_stop'); "
-                    "missing=[n for n in required if not hasattr(torch.ops.triton_jit_cpu,n)]; "
-                    "assert not missing, missing"
-                ),
+                NATIVE_OPERATOR_SMOKE,
             ],
             env=probe_env,
             text=True,
             capture_output=True,
             check=False,
-            timeout=120,
+            timeout=300,
         )
         if native_probe.returncode:
             raise RuntimeError("native operator probe failed: " + native_probe.stderr)

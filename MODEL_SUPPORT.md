@@ -26,8 +26,8 @@ forks.
 
 Before a model is added to `supported_models`:
 
-1. Record architecture, checkpoint quantization contract, ModelScope ID and
-   inference boundaries in `runtime-manifest.json`.
+1. Record architecture, checkpoint quantization contract and inference
+   boundaries in `runtime-manifest.json`.
 2. Add a complete `vllm serve` command to the README and model card.
 3. Run a real OpenAI-compatible HTTP correctness smoke, including the model's
    chat/reasoning behavior where applicable.

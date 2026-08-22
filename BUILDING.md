@@ -11,10 +11,9 @@ isolated copy of vLLM and does not include model weights.
    `.venv311`. The CPU extension is rebuilt from source.
 2. A relocatable macOS libomp prefix containing `include/omp.h` and
    `lib/libomp.dylib`.
-3. Clean local checkouts for the unpublished Triton CPU and FlagGems candidate
-   commits, supplied through the source override variables below. The other
-   locked components may be fetched from their Git URLs. After the candidate
-   branches are published, all five components can be fetched directly.
+3. Network access to fetch the exact published component commits, or clean
+   local checkouts supplied through the source override variables below for an
+   offline build.
 
 No input path is hardcoded. The two required paths may be anywhere:
 
@@ -74,10 +73,8 @@ export FLAGOS_LIBOMP_ROOT=/path/to/relocatable-libomp
 ## Local source overrides
 
 Published non-vLLM components are fetched from their exact locked commits and
-cached below the ignored `build/source-cache/` directory. The current Triton
-CPU and FlagGems candidate commits have not yet been pushed, so their two local
-overrides are required. For a fully offline build, point every component at a
-local checkout:
+cached below the ignored `build/source-cache/` directory. For a fully offline
+build, point every component at a local checkout:
 
 ```bash
 export FLAGOS_VLLM_SOURCE=/path/to/vllm-0.20.2

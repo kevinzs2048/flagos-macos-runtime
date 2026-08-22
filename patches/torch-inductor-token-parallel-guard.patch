@@ -8,7 +8,7 @@
  import re
  import sys
  import warnings
-@@ -5570,7 +5571,23 @@
+@@ -5570,4 +5571,20 @@
              for old, new in self.args.aliases():
                  code.writeline(f"auto {old} = {new};")
 -            code.splice(self.loops_code)
@@ -30,5 +30,3 @@
 +            else:
 +                code.splice(self.loops_code)
          return code.getvalue()
- 
-     def call_kernel(self, wrapper, kernel_name):

@@ -28,8 +28,8 @@ Runtime; no Docker or Metal path is used.
 
 | Asset | Size | SHA256 |
 | --- | ---: | --- |
-| Runtime logical archive (10 checksummed Release parts) | 476.0 MiB | `55581da456950e6707285af162a56f4479773288cfa43ee97923b5a2491dc95b` |
-| `flagos-wheelhouse-0.1.0-alpha.2-cp311-darwin-arm64.tar.gz` | 81.1 MiB | `6eb7d9b1db3f6ba13068573f20ba8fb7edbcaeefa7e53491f6a8dc8d537bab0b` |
+| Runtime logical archive (10 checksummed Release parts) | 476.0 MiB | `700510e08cfd4b449ab7eaa1f79b3542b10e784bd54b1a429b56864eff3203e0` |
+| `flagos-wheelhouse-0.1.0-alpha.2-cp311-darwin-arm64.tar.gz` | 81.1 MiB | `7861702606168163bb085f74c8dcfe250988492dc21538fc37cd5b74cb02efd7` |
 | `install.sh` | 6.6 KiB | `10a3d3e7997d19dc6e002c70c6fd92368b89d409033dace84318c41792a1e08d` |
 
 Archive verification checked 42,580 Runtime files, 40,735 text files for host
@@ -69,7 +69,7 @@ W8A8. Vision/MTP remain outside the text-only Runtime path.
 Real OpenAI-compatible chat HTTP smoke results are stored in
 `benchmarks/qwen38-g128-runtime-correctness.json`. All five fixed cases passed:
 Chinese, English, arithmetic (42), Python code and thinking-mode arithmetic
-(91). The release Runtime separately passed all 39,253 embedded file
+(91). The release Runtime separately passed all 42,580 embedded file
 hashes and all nine required native operator registrations. It then loaded the
 model, completed warmup and returned a correct response through the real
 `/v1/completions` HTTP endpoint. The local model
@@ -83,24 +83,28 @@ Strict coverage from a real request passed all checks:
 - GDN prefill/decode and CPU attention backends were observed.
 - Attention, Q4 body, W8 head and all GDN fallback counters were zero.
 
-For MiniCPM5, the final packaged Arm operator bundle passed all nine numerical
+For MiniCPM5, the final packaged Arm operator bundle passed all 15 numerical
 W4/W8 runtime tests: regular versus coarse-stripe equality, decode
-repeatability, thread-scope restoration, AOT Parameter identity and the
-symmetric W8 activation/compact-RHS contract. Triton CPU was rebuilt before
-testing; all three related `TritonCPU/kai-layout` lowering tests passed. The
+repeatability, thread-scope restoration, AOT Parameter identity, the symmetric
+W8 activation/compact-RHS contract and six compact Prefill tail shapes. The
+targeted `TritonCPU/kai-layout` lowering FileCheck passed. The repository's
+default `make` entry still points to a removed Python 3.9 build directory, while
+the release itself rebuilt the locked native sources successfully. The
 FlagGems source file used by the clean repository, Runtime archive and
 developer wheel is byte-identical. The final dylib links only libtriton_jit,
 Torch, OpenMP and system libraries; it has no KleidiAI/TLE compute dependency.
 
-The latest MiniCPM5 single-stream medians are W4A8 PP512 942.63 tok/s, TG128
-90.07 tok/s and Total 327.80 tok/s; W8A8 is PP512 1166.56 tok/s, TG128 65.58
-tok/s and Total 268.29 tok/s. These measurements use `vllm serve`, concurrency
+The latest MiniCPM5 single-stream medians are W4A8 PP512 1017.23 tok/s, TG128
+90.03 tok/s and Total 334.22 tok/s; W8A8 is PP512 1134.93 tok/s, TG128 64.33
+tok/s and Total 263.62 tok/s. These measurements use `vllm serve`, concurrency
 1, disabled prefix caching, one discarded full-shape prime and three retained
 samples separated by 90-second idle intervals. The same HTTP workload on
-llama.cpp with KleidiAI measured Q4_0 at 776.53/74.21/269.66 tok/s and Q8_0 at
-769.51/51.94/205.74 tok/s. Full retained values and the comparison caveat are
-recorded in `benchmarks/minicpm5-express-comparison-20260822.json`; the earlier
-packaged-runtime run remains in `benchmarks/minicpm5-packaged-runtime-final.json`.
+llama.cpp with KleidiAI measured Q4_0 at 780.95/76.37/275.63 tok/s and Q8_0 at
+425.36/53.36/178.57 tok/s. The Q4 Prefill samples were bimodal and the Q8
+Prefill working set was colder than in the previous run; all samples are
+retained. Full values and caveats are recorded in
+`benchmarks/minicpm5-express-comparison-20260823.json`; the 2026-08-22
+comparison and earlier packaged-runtime run remain as historical evidence.
 
 ## Batch-one HTTP performance
 
@@ -141,11 +145,10 @@ separately passed all Runtime hashes and direct native-op registration checks.
 - SME2 is detected but unused by the production G128 route; the validated
   kernels use Arm SDOT/I8MM.
 - The alpha is not Developer ID signed or notarized.
-- The locked Triton CPU and FlagGems candidate commits are locally committed
-  but not yet published on their configured remotes; source rebuilds currently
-  require the two clean local checkout overrides documented in `BUILDING.md`.
+- The component `minicpm-express` branches are published; source builds still
+  verify exact commit and tree identities rather than trusting movable branch
+  names.
 - Python/Torch and the compiled vLLM/Triton compiler extensions come from the
   validated build environment rather than a fully hermetic CI rebuild.
-- The published Qwen ModelScope ID is embedded in the supported-model registry;
-  the single MiniCPM publication ID must replace its placeholder before the
-  `v0.1.0-alpha.2` release is tagged.
+- Model distribution locations are maintained by their model publications;
+  the shared Runtime registry is independent of any model-hosting service.

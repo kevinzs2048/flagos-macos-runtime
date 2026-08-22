@@ -12,7 +12,7 @@
   "flag_gems": "5.0.2",
   "plugin": "0.0.0+g2ccd0485a",
   "source_provenance": {
-    "lock_sha256": "dbda2ac2bf63f99809014099f1e1abe8e96aafb11c4faaaf6e55a656a1a6a869"
+    "lock_sha256": "1429ce2372e99a66a5ae982fb0a980d63c9af6e4b21f36fbb5a485a111825944"
   },
   "unsigned_developer_candidate": true,
   "model_weights_included": false,
@@ -27,7 +27,6 @@
       "name": "Qwen3.8-27B-W4A8-arm-FlagOS-Express",
       "architecture": "Qwen3_5ForConditionalGeneration",
       "inference_mode": "text-only",
-      "modelscope_repo": "FlagRelease/Qwen3.8-27B-W4A8-arm-FlagOS-Express",
       "variants": [
         {
           "name": "W4A8 G128",
@@ -40,17 +39,16 @@
       "name": "MiniCPM5-2.6B-arm-FlagOS-Express",
       "architecture": "LlamaForCausalLM",
       "inference_mode": "text-only",
-      "modelscope_repo": "set-at-model-publication",
       "variants": [
         {
           "name": "W4A8 G128",
           "quantization": "W4A8 GPTQ G128",
-          "acceptance_evidence": "benchmarks/minicpm5-express-comparison-20260822.json"
+          "acceptance_evidence": "benchmarks/minicpm5-express-comparison-20260823.json"
         },
         {
           "name": "W8A8 Channel",
           "quantization": "W8A8 channel-wise",
-          "acceptance_evidence": "benchmarks/minicpm5-express-comparison-20260822.json"
+          "acceptance_evidence": "benchmarks/minicpm5-express-comparison-20260823.json"
         }
       ]
     }

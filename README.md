@@ -22,8 +22,8 @@ prime request was discarded, and each of three retained samples followed a
 | Model | PP512 | TG128 | Total 512+128 |
 | --- | ---: | ---: | ---: |
 | Qwen3.8-27B W4A8 G128 | 76.47 tok/s | 13.07 tok/s | 38.98 tok/s |
-| MiniCPM5-2.6B W4A8 G128 | 942.63 tok/s | 90.07 tok/s | 327.80 tok/s |
-| MiniCPM5-2.6B W8A8 Channel | 1166.56 tok/s | 65.58 tok/s | 268.29 tok/s |
+| MiniCPM5-2.6B W4A8 G128 | 1017.23 tok/s | 90.03 tok/s | 334.22 tok/s |
+| MiniCPM5-2.6B W8A8 Channel | 1134.93 tok/s | 64.33 tok/s | 263.62 tok/s |
 
 The Qwen values are the retained thermally cooled acceptance medians for this
 Runtime lineage. Its public `v0.1.0-alpha.1` model card records the earlier
@@ -31,12 +31,15 @@ Runtime lineage. Its public `v0.1.0-alpha.1` model card records the earlier
 Qwen GDN, G128 and W8 `lm_head` routes while adding the MiniCPM kernels.
 
 Under the same HTTP workload, llama.cpp built with KleidiAI and its default
-runtime kernel selection measured Q4_0 at 776.53/74.21/269.66 tok/s and Q8_0
-at 769.51/51.94/205.74 tok/s. See
-[`benchmarks/minicpm5-express-comparison-20260822.json`](benchmarks/minicpm5-express-comparison-20260822.json)
+runtime kernel selection measured Q4_0 at 780.95/76.37/275.63 tok/s and Q8_0
+at 425.36/53.36/178.57 tok/s in the latest 90-second-idle run. The retained
+Q4 Prefill samples were bimodal and the Q8 Prefill working set was colder than
+in the previous run; no sample was filtered or replaced. See
+[`benchmarks/minicpm5-express-comparison-20260823.json`](benchmarks/minicpm5-express-comparison-20260823.json)
 for the retained samples, definitions and build evidence. The quantization
 formats are not numerically identical, so this is a serving comparison rather
-than a claim that the checkpoints have identical quantization error.
+than a claim that the checkpoints have identical quantization error. The
+2026-08-22 comparison remains available as historical residency evidence.
 
 ## Supported model weights
 
@@ -47,13 +50,13 @@ weights.
 python3 -m pip install --user modelscope
 
 MODEL_REPO_QWEN="FlagRelease/Qwen3.8-27B-W4A8-arm-FlagOS-Express"
-MODEL_REPO_MINICPM="<MiniCPM5 FlagOS Express ModelScope repository ID>"
 
 modelscope download --model "$MODEL_REPO_QWEN" \
   --local_dir "$HOME/Models/Qwen3.8-27B-W4A8-arm-FlagOS-Express"
-modelscope download --model "$MODEL_REPO_MINICPM" \
-  --local_dir "$HOME/Models/MiniCPM5-2.6B-arm-FlagOS-Express"
 ```
+
+Obtain the MiniCPM publication separately and place its W4A8 and W8A8
+checkpoint directories under a local model directory of your choice.
 
 ## Install a prebuilt Runtime
 
@@ -148,12 +151,11 @@ this branch without cloning or replacing the Runtime repository.
 
 ## Build everything locally
 
-The one-command build consumes a clean vLLM v0.20.2 build environment and a
+The one-command source build consumes a clean vLLM v0.20.2 build environment and a
 relocatable libomp prefix. It fetches and verifies the exact component commits
 recorded by `sources.lock.json`; clean local checkout overrides are supported
-for offline and developer builds. The unified Express component commits are
-locally committed but not yet published, so local source overrides are
-required until maintainers publish the refs. The vLLM CPU extension is rebuilt
+for offline and developer builds. All `minicpm-express` component refs are
+published, so a networked build needs no component source overrides. The vLLM CPU extension is rebuilt
 with the audited Darwin OpenMP and AOT-cache compatibility patches; the
 upstream source export is not modified.
 

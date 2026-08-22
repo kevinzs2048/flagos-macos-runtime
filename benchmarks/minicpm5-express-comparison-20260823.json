@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "date": "2026-08-23",
+  "host": "Mac17,9 / Apple M5 Pro / 64 GiB / macOS 26.5.1",
+  "protocol": {
+    "server": "real HTTP server",
+    "concurrency": 1,
+    "input_tokens": 512,
+    "output_tokens": 128,
+    "prefix_cache": false,
+    "discarded_full_shape_primes": 1,
+    "retained_samples": 3,
+    "idle_seconds_before_each_retained_sample": 90,
+    "prefill": "512 / streaming TTFT",
+    "decode": "1 / mean streaming TPOT over 127 intervals",
+    "total": "640 / HTTP request wall time"
+  },
+  "flagos": {
+    "runtime_version": "0.1.0-alpha.2",
+    "runtime_sha256": "700510e08cfd4b449ab7eaa1f79b3542b10e784bd54b1a429b56864eff3203e0",
+    "vllm": "0.20.2+cpu",
+    "models": {
+      "w4a8_g128": {
+        "checkpoint": "MiniCPM5-2.6B-W4A8-G128-FlagOS",
+        "samples": [
+          [1044.445101, 89.692543, 335.605993],
+          [1017.232268, 90.026348, 334.222046],
+          [998.381855, 90.368039, 333.492140]
+        ],
+        "median": [1017.232268, 90.026348, 334.222046],
+        "retention_vs_20260822": [1.079147, 0.999557, 1.019594]
+      },
+      "w8a8_channel": {
+        "checkpoint": "MiniCPM5-2.6B-W8A8-Channel-FlagOS",
+        "samples": [
+          [1134.926590, 66.749767, 271.797135],
+          [1143.096246, 64.092104, 263.319988],
+          [1130.807396, 64.332875, 263.618079]
+        ],
+        "median": [1134.926590, 64.332875, 263.618079],
+        "retention_vs_20260822": [0.972880, 0.980955, 0.982586]
+      }
+    }
+  },
+  "llama_cpp": {
+    "commit": "680a9ae",
+    "build": {
+      "GGML_CPU_KLEIDIAI": true,
+      "GGML_METAL": false,
+      "device": "none",
+      "threads": 4,
+      "threads_batch": 16,
+      "kleidiai_environment_overrides": false,
+      "runtime_kernel_selection": "automatic SME2"
+    },
+    "models": {
+      "q4_0": {
+        "checkpoint": "MiniCPM5-2.6B-Q4_0.gguf",
+        "samples": [
+          [780.951296, 76.223229, 275.632024],
+          [366.756168, 76.444349, 209.318440],
+          [799.128086, 76.367225, 277.792367]
+        ],
+        "median": [780.951296, 76.367225, 275.632024]
+      },
+      "q8_0": {
+        "checkpoint": "MiniCPM5-2.6B-Q8_0.gguf",
+        "samples": [
+          [425.355921, 53.360010, 178.574962],
+          [428.548157, 53.262279, 178.804440],
+          [408.997315, 53.404532, 176.305674]
+        ],
+        "median": [425.355921, 53.360010, 178.574962]
+      }
+    }
+  },
+  "metric_order": [
+    "pp512_tok_s",
+    "tg128_tok_s",
+    "total_tok_s"
+  ],
+  "flagos_over_llama_cpp": {
+    "w4a8_g128_over_q4_0": [1.302555, 1.178861, 1.212566],
+    "w8a8_channel_over_q8_0": [2.668181, 1.205638, 1.476232]
+  },
+  "notes": [
+    "W4A8 G128 and Q4_0 are different quantization formats.",
+    "W8A8 Channel and Q8_0 are different quantization formats.",
+    "The llama.cpp Q4 prefill samples were bimodal while decode remained stable; all retained samples are reported without filtering.",
+    "The llama.cpp Q8 retained prefill samples were slower than the immediately post-load discarded prime and the 2026-08-22 retained samples; this run reports the observed 90-second-idle state without substituting historical values.",
+    "llama.cpp cpu-range and cpu-mask are no-ops on Apple platforms in this source revision, so the comparison does not claim effective CPU affinity."
+  ]
+}
