@@ -1,79 +1,95 @@
-# FlagOS Express Runtime for macOS
+# FlagOS Express Runtime for Apple M5 Pro
 
-One native Apple M5 Pro Runtime for validated W4A8 and W8A8 models through the
-standard vLLM CLI. This release line started with the published Qwen3.8-27B
-W4A8 Runtime at `v0.1.0-alpha.1` and extends the same source and ABI lineage to
-MiniCPM5-2.6B W4A8 G128 and channel-wise W8A8. It packages the validated Python
-environment, vLLM 0.20.2, Triton CPU, FlagGems, vLLM-Plugin-FL,
-libtriton_jit and the required native libraries. Model weights are downloaded
-separately; a model release does not create a second Runtime fork.
+FlagOS Express is a native, CPU-only macOS Runtime for serving validated W4A8
+and W8A8 language models through the standard vLLM CLI. One Runtime supports
+both Qwen3.8-27B W4A8 G128 and MiniCPM5-2.6B W4A8 G128/W8A8 Channel; model
+weights are distributed separately and do not require model-specific Runtime
+forks.
 
-This developer release targets Mac17,9 / Apple M5 Pro / 64 GiB. It uses the
-Arm CPU only; Metal is not used. The production G128 route uses SDOT/I8MM and
-does not require SME2.
+The Runtime packages Python 3.11, PyTorch, vLLM 0.20.2, Triton CPU, FlagGems,
+vLLM-Plugin-FL, libtriton_jit and their native dependencies. The production
+Arm kernels use SDOT and I8MM. Metal, GPU offload, Docker and virtual machines
+are not used.
 
-## Validated batch-one performance
+## Platform and scope
 
-Tested with a real OpenAI-compatible `vllm serve`, concurrency 1, a 512-token
-prompt and 128 generated tokens. Prefix caching was disabled, one complete
-prime request was discarded, and each of three retained samples followed a
-90-second idle interval.
+| Item | Validated configuration |
+| --- | --- |
+| Host | Mac17,9 / Apple M5 Pro / 64 GiB unified memory |
+| OS | macOS 26.5.1, arm64 |
+| Required Arm features | DotProd and I8MM |
+| Runtime | FlagOS `0.1.0-alpha.2`, vLLM `0.20.2+cpu` |
+| Serving mode | Text-only, OpenAI-compatible HTTP API |
+| Accelerator | CPU only; Metal disabled |
 
-| Model | PP512 | TG128 | Total 512+128 |
+The installer intentionally rejects other Mac models. This is a validated
+developer release, not a claim of compatibility with every Apple Silicon Mac.
+
+## Source and release layout
+
+The source branch, binary release and model weights have separate locations:
+
+| Content | Location |
+| --- | --- |
+| Unified Runtime source | [`kevinzs2048/flagos-macos-runtime`, branch `minicpm-express`](https://github.com/kevinzs2048/flagos-macos-runtime/tree/minicpm-express) |
+| Prebuilt Runtime target | [`v0.1.0-alpha.2` GitHub Release](https://github.com/kevinzs2048/flagos-macos-runtime/releases/tag/v0.1.0-alpha.2) |
+| Qwen model weights | [`FlagRelease/Qwen3.8-27B-W4A8-arm-FlagOS-Express`](https://modelscope.cn/models/FlagRelease/Qwen3.8-27B-W4A8-arm-FlagOS-Express) |
+| MiniCPM model weights | Distributed separately through the corresponding model publication |
+
+The `v0.1.0-alpha.2` Release URL becomes downloadable after the tag and assets
+are published. Until then, use the source branch and locally built artifacts.
+
+## Validated performance
+
+All measurements use a real HTTP server, concurrency 1, exactly 512 input
+tokens and 128 generated tokens. Prefix caching was disabled. One full-shape
+prime was discarded, followed by three retained samples with a 90-second idle
+interval before each sample.
+
+| Model | Prefill PP512 | Decode TG128 | Total 512+128 |
 | --- | ---: | ---: | ---: |
-| Qwen3.8-27B W4A8 G128 | 76.47 tok/s | 13.07 tok/s | 38.98 tok/s |
-| MiniCPM5-2.6B W4A8 G128 | 1017.23 tok/s | 90.03 tok/s | 334.22 tok/s |
-| MiniCPM5-2.6B W8A8 Channel | 1134.93 tok/s | 64.33 tok/s | 263.62 tok/s |
+| MiniCPM5-2.6B W4A8 G128, FlagOS | 1017.23 tok/s | 90.03 tok/s | 334.22 tok/s |
+| MiniCPM5-2.6B Q4_0, llama.cpp + KleidiAI | 780.95 tok/s | 76.37 tok/s | 275.63 tok/s |
+| MiniCPM5-2.6B W8A8 Channel, FlagOS | 1134.93 tok/s | 64.33 tok/s | 263.62 tok/s |
+| MiniCPM5-2.6B Q8_0, llama.cpp + KleidiAI | 425.36 tok/s | 53.36 tok/s | 178.57 tok/s |
+| Qwen3.8-27B W4A8 G128, FlagOS | 76.47 tok/s | 13.07 tok/s | 38.98 tok/s |
 
-The Qwen values are the retained thermally cooled acceptance medians for this
-Runtime lineage. Its public `v0.1.0-alpha.1` model card records the earlier
-74.93/12.73/38.07 tok/s release measurements. The current branch preserves the
-Qwen GDN, G128 and W8 `lm_head` routes while adding the MiniCPM kernels.
+The latest llama.cpp Q4 Prefill samples were bimodal, and its Q8 Prefill
+working set was colder than in the preceding run. No sample was removed or
+replaced. W4A8 versus Q4_0 and W8A8 versus Q8_0 are serving comparisons between
+different quantization formats; they do not imply identical quantization
+error. Raw samples, metric definitions and build evidence are recorded in
+[`benchmarks/minicpm5-express-comparison-20260823.json`](benchmarks/minicpm5-express-comparison-20260823.json).
 
-Under the same HTTP workload, llama.cpp built with KleidiAI and its default
-runtime kernel selection measured Q4_0 at 780.95/76.37/275.63 tok/s and Q8_0
-at 425.36/53.36/178.57 tok/s in the latest 90-second-idle run. The retained
-Q4 Prefill samples were bimodal and the Q8 Prefill working set was colder than
-in the previous run; no sample was filtered or replaced. See
-[`benchmarks/minicpm5-express-comparison-20260823.json`](benchmarks/minicpm5-express-comparison-20260823.json)
-for the retained samples, definitions and build evidence. The quantization
-formats are not numerically identical, so this is a serving comparison rather
-than a claim that the checkpoints have identical quantization error. The
-2026-08-22 comparison remains available as historical residency evidence.
+## Install the prebuilt Runtime
 
-## Supported model weights
-
-Install the ModelScope CLI. The Runtime archive itself does not contain model
-weights.
-
-```bash
-python3 -m pip install --user modelscope
-
-MODEL_REPO_QWEN="FlagRelease/Qwen3.8-27B-W4A8-arm-FlagOS-Express"
-
-modelscope download --model "$MODEL_REPO_QWEN" \
-  --local_dir "$HOME/Models/Qwen3.8-27B-W4A8-arm-FlagOS-Express"
-```
-
-Obtain the MiniCPM publication separately and place its W4A8 and W8A8
-checkpoint directories under a local model directory of your choice.
-
-## Install a prebuilt Runtime
+After the `v0.1.0-alpha.2` assets are published, download and verify the
+installer before running it:
 
 ```bash
 VERSION=0.1.0-alpha.2
 BASE="https://github.com/kevinzs2048/flagos-macos-runtime/releases/download/v$VERSION"
 
-curl -fLO "$BASE/install.sh"
-curl -fLO "$BASE/install.sh.sha256"
+curl --fail --location --remote-name "$BASE/install.sh"
+curl --fail --location --remote-name "$BASE/install.sh.sha256"
 shasum -a 256 -c install.sh.sha256
 bash install.sh
+```
 
+Expose the packaged standard vLLM command in the current shell:
+
+```bash
 export PATH="$HOME/Library/FlagOS/current/bin:$PATH"
 vllm --version
 ```
 
-For a locally built archive:
+The installer requires no `sudo`. It downloads ten independently checksummed
+Runtime parts, four at a time, verifies and reconstructs the 476 MiB archive,
+installs it below `~/Library/FlagOS/`, and atomically activates the new version.
+The installation path must not contain whitespace because PyTorch Inductor
+cannot compile the CPU sampler against such a library path.
+
+To install a locally built archive instead:
 
 ```bash
 bash install.sh \
@@ -81,28 +97,40 @@ bash install.sh \
 export PATH="$HOME/Library/FlagOS/current/bin:$PATH"
 ```
 
-The installer uses no `sudo`. It verifies the archive checksum, platform,
-required Arm features and the packaged vLLM import before activating the
-Runtime. The prebuilt Runtime is downloaded as independently checksummed
-50 MiB parts (four downloads at a time) and reconstructed transparently; this
-avoids unreliable long-lived GitHub upload/download connections. The default
-install root is `~/Library/FlagOS`; paths containing whitespace are rejected
-because PyTorch Inductor cannot compile its CPU sampler against them.
+## Obtain model weights
 
-## Run a supported model
-
-The same Runtime serves Qwen and MiniCPM. The MiniCPM publication contains
-validated W4A8 G128 and channel-wise W8A8 checkpoint variants. Select the
-checkpoint directory for the variant being served. W4A8 example:
+The Runtime does not contain model weights. Install the ModelScope CLI to
+download a published checkpoint:
 
 ```bash
-MODEL="$HOME/Models/MiniCPM5-2.6B-arm-FlagOS-Express/<W4A8 checkpoint>"
-NAME=minicpm5-w4a8
+python3 -m pip install --user modelscope
+```
+
+For Qwen3.8-27B:
+
+```bash
+MODEL_REPO="FlagRelease/Qwen3.8-27B-W4A8-arm-FlagOS-Express"
+MODEL_DIR="$HOME/Models/Qwen3.8-27B-W4A8-arm-FlagOS-Express"
+
+modelscope download --model "$MODEL_REPO" --local_dir "$MODEL_DIR"
+```
+
+For MiniCPM5-2.6B, download the corresponding model publication and keep the
+W4A8 and W8A8 checkpoint directories separately. The serving examples below
+accept any absolute local path and therefore do not require a placeholder
+ModelScope repository ID in the Runtime.
+
+## Serve MiniCPM5-2.6B
+
+### W4A8 G128
+
+```bash
+MODEL="/absolute/path/to/MiniCPM5-2.6B-W4A8-G128-FlagOS"
 
 vllm serve "$MODEL" \
   --host 127.0.0.1 \
   --port 8000 \
-  --served-model-name "$NAME" \
+  --served-model-name minicpm5-w4a8 \
   --max-model-len 8192 \
   --max-num-batched-tokens 2048 \
   --max-num-seqs 1 \
@@ -113,12 +141,51 @@ vllm serve "$MODEL" \
   --compilation-config '{"mode":3}'
 ```
 
-For W8A8, select the W8A8 checkpoint under the same MiniCPM publication and use
-`NAME=minicpm5-w8a8`. No GPU or Metal memory option is required; this is the
-Arm CPU path.
+### W8A8 Channel
 
-Qwen3.8-27B uses the same launcher and Runtime. Its validated release command
-keeps the text-only and reasoning-parser options explicit:
+Use the same command with the W8A8 checkpoint and a different served name:
+
+```bash
+MODEL="/absolute/path/to/MiniCPM5-2.6B-W8A8-Channel-FlagOS"
+
+vllm serve "$MODEL" \
+  --host 127.0.0.1 \
+  --port 8000 \
+  --served-model-name minicpm5-w8a8 \
+  --max-model-len 8192 \
+  --max-num-batched-tokens 2048 \
+  --max-num-seqs 1 \
+  --language-model-only \
+  --generation-config vllm \
+  --distributed-executor-backend uni \
+  --disable-log-stats \
+  --compilation-config '{"mode":3}'
+```
+
+No GPU-memory option is needed. The packaged launcher loads the validated M5
+Pro profile, enables vLLM-Plugin-FL and forwards all inference arguments to the
+standard vLLM CLI.
+
+## Send a request
+
+In another terminal, use the served model name selected above:
+
+```bash
+curl --fail --max-time 300 http://127.0.0.1:8000/v1/chat/completions \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "model": "minicpm5-w4a8",
+    "messages": [
+      {"role": "user", "content": "Introduce yourself briefly."}
+    ],
+    "max_tokens": 128,
+    "temperature": 0.6
+  }'
+```
+
+## Serve Qwen3.8-27B with the same Runtime
+
+The Qwen route inherited from `v0.1.0-alpha.1` remains supported:
 
 ```bash
 MODEL="$HOME/Models/Qwen3.8-27B-W4A8-arm-FlagOS-Express"
@@ -139,50 +206,95 @@ vllm serve "$MODEL" \
   --disable-log-stats
 ```
 
-The launcher is intentionally thin: it sets the self-contained Runtime paths,
-sources `share/flagos/m5-pro.env` and dispatches to the standard vLLM CLI. The
-version flag has a metadata-only fast path; inference arguments are passed
-through unchanged. There is no separate FlagOS inference API and no `doctor`,
-benchmark or model-download product command.
+## Build the Runtime from source
 
-`runtime-manifest.json` is the authoritative supported-model registry. See
-[MODEL_SUPPORT.md](MODEL_SUPPORT.md) for the rule used to add future models to
-this branch without cloning or replacing the Runtime repository.
+Skip this section when using the prebuilt Runtime. A source build requires
+Xcode Command Line Tools, Homebrew, a clean stock vLLM `v0.20.2` checkout with
+a Python 3.11 environment at `.venv311`, and a relocatable libomp prefix.
 
-## Build everything locally
-
-The one-command source build consumes a clean vLLM v0.20.2 build environment and a
-relocatable libomp prefix. It fetches and verifies the exact component commits
-recorded by `sources.lock.json`; clean local checkout overrides are supported
-for offline and developer builds. All `minicpm-express` component refs are
-published, so a networked build needs no component source overrides. The vLLM CPU extension is rebuilt
-with the audited Darwin OpenMP and AOT-cache compatibility patches; the
-upstream source export is not modified.
+The following is a complete setup from clean source checkouts:
 
 ```bash
-./build.sh /path/to/vllm-0.20.2 /path/to/relocatable-libomp
+xcode-select -p
+brew install python@3.11 cmake ninja libomp
+
+WORK="$HOME/flagos-express-build"
+mkdir -p "$WORK"
+
+git clone --branch v0.20.2 --depth 1 \
+  https://github.com/vllm-project/vllm.git "$WORK/vllm-0.20.2"
+
+"$(brew --prefix python@3.11)/bin/python3.11" -m venv \
+  "$WORK/vllm-0.20.2/.venv311"
+. "$WORK/vllm-0.20.2/.venv311/bin/activate"
+python -m pip install --upgrade pip
+python -m pip install \
+  -r "$WORK/vllm-0.20.2/requirements/build/cpu.txt" \
+  -r "$WORK/vllm-0.20.2/requirements/cpu.txt"
+
+git clone --branch minicpm-express --single-branch \
+  https://github.com/kevinzs2048/flagos-macos-runtime.git \
+  "$WORK/flagos-macos-runtime"
+cd "$WORK/flagos-macos-runtime"
+
+./build.sh "$WORK/vllm-0.20.2" "$(brew --prefix libomp)"
 ```
 
-Equivalent explicit environment form:
-
-```bash
-export FLAGOS_VLLM_SOURCE=/path/to/vllm-0.20.2
-export FLAGOS_LIBOMP_ROOT=/path/to/relocatable-libomp
-export FLAGOS_TRITON_SOURCE=/path/to/triton-cpu
-export FLAGOS_FLAGGEMS_SOURCE=/path/to/FlagGems
-export FLAGOS_PLUGIN_SOURCE=/path/to/vllm-plugin-FL
-export FLAGOS_LIBTRITON_JIT_SOURCE=/path/to/libtriton_jit
-./build.sh
-```
+For an immutable release rebuild, replace `--branch minicpm-express` with
+`--branch v0.1.0-alpha.2` after the tag is published. The build materializes
+and verifies the exact component commits and Git tree IDs recorded in
+[`sources.lock.json`](sources.lock.json). Local source overrides are supported
+for fully offline builds; see [`BUILDING.md`](BUILDING.md).
 
 The build produces:
 
-- `artifacts/flagos-runtime-0.1.0-alpha.2-darwin-arm64-m5pro.tar.gz` —
-  validated self-contained end-user Runtime; Release metadata also produces
-  its 50 MiB transport parts and parts manifest.
-- `artifacts/flagos-wheelhouse-0.1.0-alpha.2-cp311-darwin-arm64.tar.gz` —
-  four component wheels for developers.
-- SHA256 sidecars and `SHA256SUMS`.
+- `artifacts/flagos-runtime-0.1.0-alpha.2-darwin-arm64-m5pro.tar.gz`: the
+  self-contained end-user Runtime.
+- Ten `*.part-NNN` files plus a parts manifest and SHA256 sidecars for GitHub
+  Release transport.
+- `artifacts/flagos-wheelhouse-0.1.0-alpha.2-cp311-darwin-arm64.tar.gz`: four
+  developer component wheels.
+- `install.sh`, `install.sh.sha256` and `SHA256SUMS`.
 
-See [BUILDING.md](BUILDING.md) for the step-by-step process and local source
-override variables.
+Run the release verifier independently with:
+
+```bash
+python3 scripts/verify_release.py
+```
+
+The verified alpha.2 archive contains 42,580 hashed files and 529 Mach-O
+objects, uses one packaged OpenMP Runtime, and passes direct W4/W8 native
+operator numerical smoke tests. See [`RELEASE_ACCEPTANCE.md`](RELEASE_ACCEPTANCE.md)
+for the complete acceptance record.
+
+## Runtime architecture
+
+```text
+standard vllm CLI
+  -> FlagOS M5 Pro profile
+  -> vLLM 0.20.2 CPU backend
+  -> vLLM-Plugin-FL
+  -> FlagGems Triton W4/W8/GDN operators
+  -> Triton CPU Arm lowering
+  -> libtriton_jit + SDOT/I8MM
+```
+
+The MiniCPM optimization does not embed or link KleidiAI/TLE compute kernels.
+FlagGems supplies the Triton kernels, Triton CPU lowers the relevant Arm dot
+operations, and libtriton_jit provides the launch ABI. The exact repository
+commits and their responsibilities are documented in
+[`UPSTREAM_STATUS.md`](UPSTREAM_STATUS.md).
+
+`runtime-manifest.json` is the authoritative supported-model registry. The
+policy for adding future models without creating another Runtime fork is
+documented in [`MODEL_SUPPORT.md`](MODEL_SUPPORT.md).
+
+## Known limitations
+
+- The release is validated only on Mac17,9 / Apple M5 Pro / 64 GiB.
+- The packaged model routes are text-only; vision and MTP are not enabled.
+- Model weights are not included in the Runtime archive.
+- The developer release is unsigned and is not notarized with an Apple
+  Developer ID.
+- Performance depends on temperature, memory residency and other host load;
+  retained benchmark samples are published without outlier substitution.
