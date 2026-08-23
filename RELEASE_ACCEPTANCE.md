@@ -30,7 +30,7 @@ Runtime; no Docker or Metal path is used.
 | --- | ---: | --- |
 | Runtime logical archive (10 checksummed Release parts) | 476.0 MiB | `700510e08cfd4b449ab7eaa1f79b3542b10e784bd54b1a429b56864eff3203e0` |
 | `flagos-wheelhouse-0.1.0-alpha.2-cp311-darwin-arm64.tar.gz` | 81.1 MiB | `7861702606168163bb085f74c8dcfe250988492dc21538fc37cd5b74cb02efd7` |
-| `install.sh` | 6.6 KiB | `10a3d3e7997d19dc6e002c70c6fd92368b89d409033dace84318c41792a1e08d` |
+| `install.sh` | 6.6 KiB | `66e320dd7ae63615098a9827663e9f40e32ae0343f373b10e9d498598db8b677` |
 
 Archive verification checked 42,580 Runtime files, 40,735 text files for host
 path relocation, 529 Mach-O images, safe archive paths, source provenance and

@@ -110,7 +110,18 @@ if [ -z "$ASSET" ]; then
   trap '/bin/rm -rf -- "$download_dir"' EXIT
   archive="flagos-runtime-$VERSION-darwin-arm64-m5pro.tar.gz"
   parts_manifest="$archive.parts"
-  CURL_ARGS=(--fail --location --silent --show-error --retry 3 --connect-timeout 20 --max-time 1800)
+  CURL_ARGS=(
+    --fail
+    --location
+    --silent
+    --show-error
+    --http1.1
+    --retry 5
+    --retry-all-errors
+    --retry-delay 2
+    --connect-timeout 20
+    --max-time 1800
+  )
   /usr/bin/curl "${CURL_ARGS[@]}" "$RELEASE_BASE/$archive.sha256" -o "$download_dir/$archive.sha256"
   /usr/bin/curl "${CURL_ARGS[@]}" "$RELEASE_BASE/$parts_manifest" -o "$download_dir/$parts_manifest"
 
