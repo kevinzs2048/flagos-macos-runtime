@@ -1,55 +1,86 @@
 {
   "schema_version": 1,
-  "locked_at": "2026-08-14T22:34:10+08:00",
-  "runtime_version": "0.1.0-alpha.1",
-  "runtime_abi": "flagos-arm-w4a8-g128-v1",
-  "source_policy": "materialize_exact_git_commits_at_build_time",
-  "components": {
+  "release_branch": "release/xing4-0-w4a8-mac-20260916",
+  "base_archive_sha256": "b78b9a64e35e9b649bae03e3227d3dc25f7de1a11ca0e4d629b8bdf59a257e07",
+  "base_source_lock_sha256": "6d96ba295bdd60a7b27f69fbf0e449fb28defc52c1b6dbe3e26dd20e6c73bd8f",
+  "base_components": {
     "vllm": {
-      "url": "https://github.com/vllm-project/vllm.git",
-      "version": "0.20.2+cpu",
-      "commit": "bc150f50299199599673614f80d12a196f377655",
-      "tree": "e4274765c4046780b073082772d6b90d1a2f9c45",
-      "tag": "v0.20.2"
+      "source_version": "0.24.0",
+      "distribution_abi": "0.24.0+cpu",
+      "commit": "ee0da84ab9e04ac7610e28580af62c365e898389",
+      "branch": "release/xingchen4-w4a8-m5-v024-20260913",
+      "dirty_paths": 0
     },
-    "triton_cpu": {
-      "url": "https://github.com/kevinzs2048/triton-cpu.git",
+    "triton_cpu_compiler": {
       "version": "3.7.2",
-      "branch": "macos-arm-w4a8",
-      "commit": "bdada74ae02d62819ad6d6d7ea54f3a927b9e45c",
-      "tree": "fa8c5b0291b754e4ffbff80e548b5e8eaeb1aacd"
+      "commit": "1feeab7e3505282d840e2898a1101ecff3a1c4b5",
+      "branch": "release/xingchen4-w4a8-m5-v024-20260913",
+      "dirty_paths": 0,
+      "policy": "reuse validated v0.24 bootstrap compiler distribution"
     },
     "flag_gems": {
-      "url": "https://github.com/kevinzs2048/FlagGems.git",
       "version": "5.0.2",
-      "branch": "macos-arm-w4a8",
-      "commit": "2be6879c1d673aaa0beb0a67dc24227562e0b8db",
-      "tree": "33e5afc3910be90bbd4d853143d1cab471fd5010"
+      "commit": "7bcb73982476057627df434223527a9bdfdfe6e1",
+      "branch": "release/xingchen4-w4a8-m5-v024-20260913",
+      "dirty_and_untracked_paths": 0
     },
     "libtriton_jit": {
-      "url": "https://github.com/kevinzs2048/libtriton_jit.git",
-      "version": "0.1.0",
-      "branch": "macos-arm-w4a8",
       "commit": "a4eb4db996a63afe281f6ac6418182c63105d73a",
-      "tree": "97801a1f12fc2137796ff5a17a3f351a89d6a848"
+      "branch": "release/xingchen4-w4a8-m5-v024-20260913",
+      "dirty_paths": 0
     },
     "vllm_plugin_fl": {
-      "url": "https://github.com/kevinzs2048/vllm-plugin-FL.git",
-      "version": "0.0.0+g2ccd0485a",
-      "branch": "macos-arm-w4a8",
-      "commit": "2ccd0485ae4faba007ad0562fc00e776d67c2eed",
-      "tree": "4aee5b5f252f3121dd972f47915746064227a588"
+      "version": "0.0.0+gf4f9df6.d20260914.xingchen4",
+      "commit": "f4f9df6e8da92d375f8729b6c8034cbc2442ee18",
+      "branch": "release/xingchen4-w4a8-m5-v024-20260913",
+      "dirty_and_untracked_paths": 0
+    },
+    "kleidiai": {
+      "commit": "4bc7bd457930de119f8b826ecfdebfbd9c08cf8c",
+      "branch": "release/xingchen4-w4a8-m5-flagrelease-20260913",
+      "dirty_paths": 0,
+      "linkage": "static in libflag_gems_arm_ops.dylib"
     }
   },
+  "adapter_policy": "new local naming/configuration overlay; not claimed identical to base plugin commit",
+  "overlay_sha256": {
+    "adapter/vllm_fl/__init__.py": "c86b98a1f2e511f681ab4fb1c1fa16b5e90f8b790a84511a6ee643a7cb38b5d8",
+    "adapter/vllm_fl/configs/xingchen4.py": "33fdafdb0a995a13a09eef0314258cbfd65da1e06a3b58da82c6b0333b85033c",
+    "adapter/vllm_fl/models/telechat4.py": "cec87cb86077c6b6a64640d7802bfae65e1fd19112ff83eced49df8c8417e43a",
+    "adapter/vllm_fl/models/xingchen4.py": "003ecfd8a423d312d151e48af9926f39f3768c65afc80e286afa82d2407db8bb",
+    "adapter/vllm_fl/patches/arm_cpu_vllm_0202.py": "4250b924bfd4d83767f15dba6524b2dd4dddc217ec50a5e494df28e659372c86",
+    "adapter/vllm_fl/spec_decode/telechat4_mtp.py": "48139e249956dcd7f6e827d251915c4be5363e12afdfb59c207b2ed0ffd087b7",
+    "launcher/bench_xingchen4_w4a8_stages.py": "dcddfbddc3e3c4e2dcd60c08ce8f83ee83a86940df49d601dbbfadf905ed7cee",
+    "launcher/vllm": "2dc247b0177572f558b576e15a661ac610fba2d29b590a8870ea5915fd734eb4"
+  },
+  "quantizer_vendor_sha256": {
+    "vendor/FLAGOS_COMPRESSOR_LICENSE": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+    "vendor/flagos_compressor/__init__.py": "f9ca0e90501bce63acd1e459c5f7fbd9d04328f91b51232638c04cda80ce4a64",
+    "vendor/flagos_compressor/backends/__init__.py": "475db76f9089704383312a071ee90b45dacf1604907d147ab0b6abb53d7f5e4f",
+    "vendor/flagos_compressor/backends/op_registry.py": "2ad460e0494a03951ac3377c9864d16ec9d5b9801cdd6dd60fafe2dc9c3cfc7d",
+    "vendor/flagos_compressor/quantizers/__init__.py": "0b05c06710c54b4cef54b70339d959a2bb9beab32b38d883be618ddd5267e579",
+    "vendor/flagos_compressor/quantizers/mse_int.py": "764756bac4ad65de32aa2d8aaf5a7722f6489a2a285aa868ab10f21d04346b12",
+    "vendor/flagos_compressor/quantizers/mse_int4.py": "e77d8001b8bd0dc4daf3a22f09bf3e2a4f61ee804f1e3b1d1d6dfaf336334d7c"
+  },
+  "native_compiler_flaggems_files_unchanged": 2106,
   "toolchain": {
     "macos": "26.5.1 (25F80)",
     "sdk": "26.5",
-    "sdk_path": "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
     "clang": "Apple clang 21.0.0",
     "architecture": "arm64",
+    "machine": "Mac17,9 / Apple M5 Pro / 64 GiB",
     "python": "3.11.9",
     "torch": "2.11.0",
-    "cmake": "4.4.2",
     "build_type": "Release"
+  },
+  "model_contract": {
+    "architecture": "Xing4_0ForCausalLM",
+    "model_type": "xing4_0",
+    "quantization": "W4A8 G128 / symmetric dynamic token A8 / signed W4 in INT8 storage",
+    "config_sha256": "80d83db61147b0f1cfddabc5e0aea2213cb24fa1f32ef0397f7b25b03d63451a",
+    "index_sha256": "0079cf2522fdda94868160e6e40af3a45e5a7ea66f9ce67095202a5e2e0f5413",
+    "quantization_manifest_sha256": "441ce78a2eb46f22cf43fcf8b438c944491375d0863fc78358c93d629c2d4066",
+    "source_config_sha256": "253e6742d5be0094fd03d79d65cead200de11c5962be9220f8117d978bbe3cc8",
+    "source_index_sha256": "b8aaf0fef435f8ca85448a19e50bb6a3776c8753ff896751b879d6cf5f3818e2"
   }
 }

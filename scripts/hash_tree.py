@@ -16,6 +16,12 @@ def main() -> int:
         names[:] = sorted(name for name in names if name != "__pycache__")
         for filename in sorted(filenames):
             path = Path(directory) / filename
+            # The bootstrap Runtime can already contain an older integrity
+            # manifest at the output path. Never hash that stale file and
+            # then overwrite it: a manifest cannot contain its own stable
+            # digest.
+            if path.resolve() == output:
+                continue
             if path.is_symlink():
                 digest = hashlib.sha256(os.readlink(path).encode()).hexdigest()
             else:

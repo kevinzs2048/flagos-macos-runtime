@@ -1,0 +1,77 @@
+#!/bin/sh
+set -eu
+
+SCRIPT=$0
+while [ -L "$SCRIPT" ]; do
+  SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$SCRIPT")" && pwd)
+  LINK_TARGET=$(readlink "$SCRIPT")
+  case "$LINK_TARGET" in
+    /*) SCRIPT=$LINK_TARGET ;;
+    *) SCRIPT="$SCRIPT_DIR/$LINK_TARGET" ;;
+  esac
+done
+SELF_DIR=$(CDPATH= cd -- "$(dirname -- "$SCRIPT")" && pwd)
+RUNTIME_ROOT=$(CDPATH= cd -- "$SELF_DIR/.." && pwd)
+PYTHON="$RUNTIME_ROOT/python/bin/python3.11"
+SITE="$RUNTIME_ROOT/python/lib/python3.11/site-packages"
+PROFILE="$RUNTIME_ROOT/share/flagos/m5-pro.env"
+
+[ -x "$PYTHON" ] || { echo "FlagOS Runtime Python is missing: $PYTHON" >&2; exit 2; }
+[ -d "$SITE" ] || { echo "FlagOS Runtime packages are missing: $SITE" >&2; exit 2; }
+[ -f "$PROFILE" ] || { echo "FlagOS M5 Pro profile is missing: $PROFILE" >&2; exit 2; }
+
+# Raise a small inherited descriptor limit, but never lower a larger one.
+SOFT_LIMIT=$(ulimit -Sn)
+case "$SOFT_LIMIT" in
+  *[!0-9]*|'') ;;
+  *)
+    if [ "$SOFT_LIMIT" -lt 65536 ]; then
+      ulimit -Sn 65536 2>/dev/null || ulimit -Sn 4096 2>/dev/null || true
+    fi
+    ;;
+esac
+
+export FLAGOS_RUNTIME_ROOT="$RUNTIME_ROOT"
+export FLAGOS_PROFILE_DIR="$RUNTIME_ROOT/share/flagos"
+export PYTHONHOME="$RUNTIME_ROOT/python"
+export PYTHONPATH="$SITE"
+export DYLD_LIBRARY_PATH="$RUNTIME_ROOT/lib:$RUNTIME_ROOT/python/lib:$RUNTIME_ROOT/python/readline/lib:$RUNTIME_ROOT/python/openssl/lib:$SITE/torch/lib"
+
+# Torch Inductor invokes `openssl sha512` while compiling the CPU sampler.
+# Prefer the macOS system tool: a Homebrew openssl executable inherited ahead
+# of /usr/bin can bind against the Runtime's private OpenSSL dylibs and return
+# no digest, which makes model warmup fail.
+export PATH="/usr/bin:/bin:/usr/sbin:/sbin${PATH:+:$PATH}"
+
+# Do not inherit retired development routes or host-absolute libraries.
+unset FLAGGEMS_VENDOR_NAME FLAGGEMS_LIBTRITON_JIT_Q4_OP
+unset FLAGGEMS_Q4_G128_SME2_LIBRARY
+unset FLAGOS_Q4_KERNEL_SOURCE FLAGOS_W8_KERNEL_SOURCE
+unset TRITON_CPU_QWEN35_Q4_RUNTIME TRITON_BACKENDS_IN_TREE
+unset TRITON_CPU_BACKEND TRITON_CPU_FIXED_I8MM
+unset FLAGGEMS_Q4_SME2_HYBRID FL_CPU_QWEN_GDN_BACKEND
+unset FL_CPU_QWEN_ALLOW_UNSAFE_GDN VLLM_CPU_ALLOW_UNIPROC
+
+# shellcheck disable=SC1090
+. "$PROFILE"
+
+if [ "${1:-}" = "--flagos-run-python" ]; then
+  shift
+  exec "$PYTHON" "$@"
+fi
+
+if [ "${1:-}" = "--flagos-xingchen4-stage-benchmark" ]; then
+  shift
+  : "${MODEL_DIR:?Set MODEL_DIR to the XingChen4 W4A8 G128 checkpoint}"
+  exec "$PYTHON" \
+    "$RUNTIME_ROOT/share/flagos/examples/bench_xingchen4_w4a8_stages.py" "$@"
+fi
+
+# Match vLLM's version flag without importing every CLI subcommand.  The full
+# CLI remains untouched for serve and all other standard commands.
+if [ "$#" -eq 1 ] && { [ "$1" = "--version" ] || [ "$1" = "-v" ]; }; then
+  exec "$PYTHON" -c \
+    'import importlib.metadata; print(importlib.metadata.version("vllm"))'
+fi
+
+exec "$PYTHON" -m vllm.entrypoints.cli.main "$@"
