@@ -88,6 +88,32 @@ def enable(module, mt=64, nt=256):
             n = self.proj.out_features
             workers = min(self.out._bf16_sme_workers, torch.get_num_threads())
             a8 = w8.quant_pack_bf16(x.reshape(m, k))
+            if (
+                getattr(self, "_wavefront_swiglu_enabled", False)
+                and self.out.bias is None
+            ):
+                from flag_gems.runtime.backend._arm.quantized_linear.sme2.hybrid_swiglu import (
+                    prepare_neon_pair,
+                )
+
+                hw, clusters, mt, nt, dt = self._wavefront_swiglu_policy
+                out = native.run_wavefront(
+                    w8.repack_neon_lhs(a8, m, k),
+                    *prepare_neon_pair(self.gate_layer, self.proj),
+                    prepare_packed_weight(self.out),
+                    table,
+                    m,
+                    n,
+                    k,
+                    self.out.out_features,
+                    min(hw, torch.get_num_threads()),
+                    clusters,
+                    mt,
+                    nt,
+                    dt,
+                )
+                self._wavefront_swiglu_calls += 1
+                return out.reshape(*x.shape[:-1], self.out.out_features)
             if getattr(self, "_hybrid_swiglu_enabled", False):
                 from flag_gems.runtime.backend._arm.quantized_linear.sme2.hybrid_swiglu import (
                     prepare_weights,
@@ -177,7 +203,7 @@ def configure_hybrid(
     workers=18,
     fraction=0.375,
     neon_tile=(32, 64),
-    enabled=True
+    enabled=True,
 ):
     """Explicit experimental policy; preserves the tuned BF16 down projection."""
     import math
@@ -225,6 +251,8 @@ def configure_hybrid(
         )
         layer._hybrid_swiglu_calls = 0
         layer._hybrid_swiglu_enabled = bool(enabled)
+        if enabled:
+            layer._wavefront_swiglu_enabled = False
     return len(layers)
 
 
@@ -232,3 +260,60 @@ def select_hybrid(module, enabled):
     for layer in module.modules():
         if hasattr(layer, "_hybrid_swiglu_policy"):
             layer._hybrid_swiglu_enabled = bool(enabled)
+            if enabled:
+                layer._wavefront_swiglu_enabled = False
+
+
+@torch.no_grad()
+def configure_wavefront(
+    module, *, cpu_clusters, workers=18, tile=(32, 128, 256), enabled=True
+):
+    from flag_gems.runtime.backend._arm.quantized_linear.sme2.hybrid_swiglu import (
+        prepare_neon_pair,
+    )
+
+    if type(workers) is not int or not 1 <= workers <= torch.get_num_threads():
+        raise ValueError("Invalid worker count")
+    if (
+        cpu_clusters.device.type != "cpu"
+        or cpu_clusters.dtype != torch.long
+        or cpu_clusters.ndim != 1
+        or not cpu_clusters.numel()
+        or not cpu_clusters.is_contiguous()
+        or cpu_clusters.min() < 0
+        or cpu_clusters.max() >= 32
+    ):
+        raise ValueError("Invalid CPU cluster map")
+    if (
+        len(tile) != 3
+        or any(type(t) is not int for t in tile)
+        or not 0 < tile[0] <= 256
+        or tile[0] % 32
+        or not 0 < tile[1] <= 2048
+        or tile[1] % 4
+        or not 0 < tile[2] <= 2048
+        or tile[2] % 32
+    ):
+        raise ValueError("Invalid row pipeline tile")
+    layers = [
+        p
+        for p in module.modules()
+        if hasattr(p, "_w8_swiglu_enabled") and p.out.bias is None
+    ]
+    for layer in layers:
+        prepare_neon_pair(layer.gate_layer, layer.proj)
+    for layer in layers:
+        layer._wavefront_swiglu_policy = (workers, cpu_clusters.clone(), *tile)
+        layer._wavefront_swiglu_calls = 0
+        layer._wavefront_swiglu_enabled = bool(enabled)
+        if enabled:
+            layer._hybrid_swiglu_enabled = False
+    return len(layers)
+
+
+def select_wavefront(module, enabled):
+    for layer in module.modules():
+        if hasattr(layer, "_wavefront_swiglu_policy"):
+            layer._wavefront_swiglu_enabled = bool(enabled)
+            if enabled:
+                layer._hybrid_swiglu_enabled = False

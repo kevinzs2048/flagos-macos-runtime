@@ -90,6 +90,17 @@ def test_model_adapter_and_accuracy_diagnostic_fallbacks():
         )
         == 1
     )
+    from qwen_image_cpu.w8_swiglu import configure_wavefront, select_wavefront
+
+    assert (
+        configure_wavefront(
+            layer,
+            workers=4,
+            cpu_clusters=torch.zeros(os.cpu_count(), dtype=torch.long),
+            enabled=False,
+        )
+        == 1
+    )
     for m, a8 in [(137, True), (9, True), (137, False)]:
         layer.gate_layer.activation_quantization = (
             layer.proj.activation_quantization
@@ -105,3 +116,8 @@ def test_model_adapter_and_accuracy_diagnostic_fallbacks():
         assert torch.equal(layer(x), expected)
         assert layer._hybrid_swiglu_calls - previous_calls == int(m >= 128 and a8)
         select_hybrid(layer, False)
+        before = layer._wavefront_swiglu_calls
+        select_wavefront(layer, True)
+        assert torch.equal(layer(x), expected)
+        assert layer._wavefront_swiglu_calls - before == int(m >= 128 and a8)
+        select_wavefront(layer, False)

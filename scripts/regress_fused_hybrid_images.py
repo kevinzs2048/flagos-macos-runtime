@@ -14,6 +14,7 @@ def main():
     parser.add_argument("--baseline", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--order", default="mixed,native")
+    parser.add_argument("--wavefront", action="store_true")
     args = parser.parse_args()
     order = args.order.split(",")
     if sorted(order) != ["mixed", "native"]:
@@ -26,27 +27,35 @@ def main():
     )
     torch.set_num_interop_threads(1)
     from qwen_image_cpu.pipeline import load_pipeline, generate
-    from qwen_image_cpu.w8_swiglu import configure_hybrid, select_hybrid
+    from qwen_image_cpu.w8_swiglu import (
+        configure_hybrid,
+        select_hybrid,
+        configure_wavefront,
+        select_wavefront,
+    )
 
     pipe, provider, metadata = load_pipeline(config["model"])
-    assert (
-        configure_hybrid(
-            pipe.transformer,
-            workers=18,
-            fraction=0.375,
-            cpu_clusters=torch.tensor([0] * 6 + [1] * 6 + [2] * 6),
-            enabled=False,
-        )
-        == 28
+    policy = dict(
+        workers=18,
+        cpu_clusters=torch.tensor([0] * 6 + [1] * 6 + [2] * 6),
+        enabled=False,
     )
-    layers = [
-        p for p in pipe.transformer.modules() if hasattr(p, "_hybrid_swiglu_calls")
-    ]
+    if args.wavefront:
+        configured = configure_wavefront(pipe.transformer, **policy)
+        select_policy = select_wavefront
+        counter = "_wavefront_swiglu_calls"
+    else:
+        configured = configure_hybrid(pipe.transformer, fraction=0.375, **policy)
+        select_policy = select_hybrid
+        counter = "_hybrid_swiglu_calls"
+    assert configured == 28
+    layers = [p for p in pipe.transformer.modules() if hasattr(p, counter)]
     kwargs = {k: config[k] for k in ("prompt", "width", "height", "seed")}
     report = dict(
         configuration=config,
         metadata=metadata,
         order=order,
+        mixed_policy="wavefront" if args.wavefront else "split_n",
         scope="Same process, same weights/prompt/seed, 2-step warmup before each 40-step image; one sample per mode",
         expected_pixel_sha256=baseline["requests"][0]["pixel_sha256"],
         requests=[],
@@ -54,16 +63,16 @@ def main():
     )
     try:
         for mode in order:
-            select_hybrid(pipe.transformer, mode == "mixed")
+            select_policy(pipe.transformer, mode == "mixed")
             print("WARMUP", mode, flush=True)
             generate(pipe, provider, steps=2, **kwargs)
-            before = sum(p._hybrid_swiglu_calls for p in layers)
+            before = sum(getattr(p, counter) for p in layers)
             print("IMAGE", mode, flush=True)
             image, record = generate(pipe, provider, steps=40, **kwargs)
             image.save(args.output / (mode + ".png"))
             digest = hashlib.sha256(image.tobytes()).hexdigest()
             assert digest == report["expected_pixel_sha256"]
-            hits = sum(p._hybrid_swiglu_calls for p in layers) - before
+            hits = sum(getattr(p, counter) for p in layers) - before
             assert hits == (1120 if mode == "mixed" else 0)
             record.update(
                 mode=mode,
