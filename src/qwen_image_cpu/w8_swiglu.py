@@ -87,17 +87,42 @@ def enable(module, mt=64, nt=256):
             m = x.numel() // k
             n = self.proj.out_features
             workers = min(self.out._bf16_sme_workers, torch.get_num_threads())
-            lhs = native.run(
-                w8.quant_pack_bf16(x.reshape(m, k)),
-                self.gate_layer.prepack(),
-                self.proj.prepack(),
-                table,
-                m,
-                n,
-                k,
-                workers,
-                *self._w8_swiglu_tile,
-            )
+            a8 = w8.quant_pack_bf16(x.reshape(m, k))
+            if getattr(self, "_hybrid_swiglu_enabled", False):
+                from flag_gems.runtime.backend._arm.quantized_linear.sme2.hybrid_swiglu import (
+                    prepare_weights,
+                )
+
+                hw, fraction, clusters, nmt, nnt = self._hybrid_swiglu_policy
+                split, *weights = prepare_weights(self.gate_layer, self.proj, fraction)
+                lhs = native.run_hybrid(
+                    a8,
+                    w8.repack_neon_lhs(a8, m, k),
+                    *weights,
+                    table,
+                    m,
+                    split,
+                    n - split,
+                    k,
+                    min(hw, torch.get_num_threads()),
+                    clusters,
+                    *self._w8_swiglu_tile,
+                    nmt,
+                    nnt,
+                )
+                self._hybrid_swiglu_calls += 1
+            else:
+                lhs = native.run(
+                    a8,
+                    self.gate_layer.prepack(),
+                    self.proj.prepack(),
+                    table,
+                    m,
+                    n,
+                    k,
+                    workers,
+                    *self._w8_swiglu_tile,
+                )
             if (
                 getattr(self.out, "_bf16_register_epilogue_enabled", False)
                 and self.out.bias is None
@@ -142,3 +167,68 @@ def select(module, enabled):
     for layer in module.modules():
         if hasattr(layer, "_w8_swiglu_enabled"):
             layer._w8_swiglu_enabled = enabled
+
+
+@torch.no_grad()
+def configure_hybrid(
+    module,
+    *,
+    cpu_clusters,
+    workers=18,
+    fraction=0.375,
+    neon_tile=(32, 64),
+    enabled=True
+):
+    """Explicit experimental policy; preserves the tuned BF16 down projection."""
+    import math
+    from flag_gems.runtime.backend._arm.quantized_linear.sme2.hybrid_swiglu import (
+        prepare_weights,
+    )
+
+    if (
+        type(workers) is not int
+        or not 1 <= workers <= torch.get_num_threads()
+        or not math.isfinite(fraction)
+        or not 0 < fraction < 1
+    ):
+        raise ValueError("Invalid hybrid worker count/fraction")
+    if (
+        cpu_clusters.device.type != "cpu"
+        or cpu_clusters.dtype != torch.long
+        or cpu_clusters.ndim != 1
+        or not cpu_clusters.numel()
+        or not cpu_clusters.is_contiguous()
+        or cpu_clusters.min() < 0
+        or cpu_clusters.max() >= 32
+    ):
+        raise ValueError("Invalid CPU cluster map")
+    if (
+        len(neon_tile) != 2
+        or any(type(t) is not int for t in neon_tile)
+        or not 0 < neon_tile[0] <= 256
+        or neon_tile[0] % 32
+        or not 0 < neon_tile[1] <= 2048
+        or neon_tile[1] % 4
+    ):
+        raise ValueError("Invalid NEON tile")
+    layers = [
+        layer for layer in module.modules() if hasattr(layer, "_w8_swiglu_enabled")
+    ]
+    for layer in layers:
+        prepare_weights(layer.gate_layer, layer.proj, fraction)
+    for layer in layers:
+        layer._hybrid_swiglu_policy = (
+            workers,
+            fraction,
+            cpu_clusters.clone(),
+            *neon_tile,
+        )
+        layer._hybrid_swiglu_calls = 0
+        layer._hybrid_swiglu_enabled = bool(enabled)
+    return len(layers)
+
+
+def select_hybrid(module, enabled):
+    for layer in module.modules():
+        if hasattr(layer, "_hybrid_swiglu_policy"):
+            layer._hybrid_swiglu_enabled = bool(enabled)

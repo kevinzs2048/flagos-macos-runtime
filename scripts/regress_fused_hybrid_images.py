@@ -1,0 +1,90 @@
+#!/usr/bin/env python3
+"""Same-process native/mixed 40-step images, matched to a saved request."""
+import argparse
+import hashlib
+import json
+from pathlib import Path
+
+import torch
+
+
+@torch.inference_mode()
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--baseline", type=Path, required=True)
+    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--order", default="mixed,native")
+    args = parser.parse_args()
+    order = args.order.split(",")
+    if sorted(order) != ["mixed", "native"]:
+        raise ValueError("Run one native and one mixed request")
+    args.output.mkdir(parents=True, exist_ok=False)
+    baseline = json.loads(args.baseline.read_text())
+    config = baseline["configuration"]
+    assert (
+        config["steps"] == 40 and config["true_cfg_scale"] == 1 and config["kv_cache"]
+    )
+    torch.set_num_interop_threads(1)
+    from qwen_image_cpu.pipeline import load_pipeline, generate
+    from qwen_image_cpu.w8_swiglu import configure_hybrid, select_hybrid
+
+    pipe, provider, metadata = load_pipeline(config["model"])
+    assert (
+        configure_hybrid(
+            pipe.transformer,
+            workers=18,
+            fraction=0.375,
+            cpu_clusters=torch.tensor([0] * 6 + [1] * 6 + [2] * 6),
+            enabled=False,
+        )
+        == 28
+    )
+    layers = [
+        p for p in pipe.transformer.modules() if hasattr(p, "_hybrid_swiglu_calls")
+    ]
+    kwargs = {k: config[k] for k in ("prompt", "width", "height", "seed")}
+    report = dict(
+        configuration=config,
+        metadata=metadata,
+        order=order,
+        scope="Same process, same weights/prompt/seed, 2-step warmup before each 40-step image; one sample per mode",
+        expected_pixel_sha256=baseline["requests"][0]["pixel_sha256"],
+        requests=[],
+        status="running",
+    )
+    try:
+        for mode in order:
+            select_hybrid(pipe.transformer, mode == "mixed")
+            print("WARMUP", mode, flush=True)
+            generate(pipe, provider, steps=2, **kwargs)
+            before = sum(p._hybrid_swiglu_calls for p in layers)
+            print("IMAGE", mode, flush=True)
+            image, record = generate(pipe, provider, steps=40, **kwargs)
+            image.save(args.output / (mode + ".png"))
+            digest = hashlib.sha256(image.tobytes()).hexdigest()
+            assert digest == report["expected_pixel_sha256"]
+            hits = sum(p._hybrid_swiglu_calls for p in layers) - before
+            assert hits == (1120 if mode == "mixed" else 0)
+            record.update(
+                mode=mode,
+                pixel_sha256=digest,
+                pixel_exact=True,
+                hybrid_mlp_calls=hits,
+                image=str(args.output / (mode + ".png")),
+            )
+            report["requests"].append(record)
+            (args.output / "report.json").write_text(
+                json.dumps(report, indent=2) + "\n"
+            )
+            print("RESULT", json.dumps(record), flush=True)
+        report["status"] = "passed"
+    except BaseException as exc:
+        report["status"] = "failed"
+        report["error"] = repr(exc)
+        raise
+    finally:
+        (args.output / "report.json").write_text(json.dumps(report, indent=2) + "\n")
+
+
+if __name__ == "__main__":
+    main()

@@ -77,6 +77,19 @@ def test_model_adapter_and_accuracy_diagnostic_fallbacks():
     enable_bf16_sme(layer, workers=4, axis=0, dynamic=True)
     enable_swiglu(layer, packed=True)
     assert enable(layer) == 1 and enable(layer) == 0
+    from qwen_image_cpu.w8_swiglu import configure_hybrid, select_hybrid
+    import os
+
+    assert (
+        configure_hybrid(
+            layer,
+            workers=4,
+            fraction=0.5,
+            cpu_clusters=torch.zeros(os.cpu_count(), dtype=torch.long),
+            enabled=False,
+        )
+        == 1
+    )
     for m, a8 in [(137, True), (9, True), (137, False)]:
         layer.gate_layer.activation_quantization = (
             layer.proj.activation_quantization
@@ -87,3 +100,8 @@ def test_model_adapter_and_accuracy_diagnostic_fallbacks():
         select(layer, True)
         actual = layer(x)
         assert torch.equal(actual, expected)
+        previous_calls = layer._hybrid_swiglu_calls
+        select_hybrid(layer, True)
+        assert torch.equal(layer(x), expected)
+        assert layer._hybrid_swiglu_calls - previous_calls == int(m >= 128 and a8)
+        select_hybrid(layer, False)
