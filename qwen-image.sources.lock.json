@@ -2,7 +2,7 @@
   "profile": "qwen-image-2.1-same112-m5-pro-pytorch-cpu",
   "hardware": "Apple M5 Pro, 18 CPUs, 64 GiB, SME2 SVL512",
   "flag_gems": {
-    "revision": "94f9c4d0e49cc72d3ae50c96b170270156600487",
+    "revision": "4fe54663c8a70949ae2346d48a209bc49bedc1e9",
     "repository": "https://github.com/flagos-ai/FlagGems",
     "status": "local development commit; not published"
   },

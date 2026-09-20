@@ -8,7 +8,7 @@ import huggingface_hub
 import huggingface_hub.errors
 import torch
 
-from flag_gems.runtime.backend._arm.quantized_linear.sme2.cpu_accumulation import (
+from qwen_image_cpu.cpu_accumulation import (
     enable_fp32_accumulation,
 )
 

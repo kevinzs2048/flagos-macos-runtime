@@ -33,11 +33,11 @@ guarantee for every matrix shape or PyTorch version.
 ## Reproduction
 
 Use the same PyTorch environment as the optimized pipeline, but expose only
-this example directory on PYTHONPATH. Set QWEN_IMAGE_DIFFUSERS_SRC to the frozen
+the runtime src directory on PYTHONPATH. Set QWEN_IMAGE_DIFFUSERS_SRC to the frozen
 reference Diffusers `src` directory. Do not source a FlagOS backend setup file.
 
 ```bash
-export PYTHONPATH="$PWD/examples/qwen_image_cpu"
+export PYTHONPATH="$PWD/src"
 export QWEN_IMAGE_DIFFUSERS_SRC=/path/to/reference/src
 export HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1
 

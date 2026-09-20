@@ -1,16 +1,36 @@
 import copy
+import subprocess
+import sys
 
 import pytest
 import torch
+
+from qwen_image_cpu.cpu_accumulation import (
+    enable_fp32_accumulation,
+)
 from qwen_image_cpu.torch_baseline import (
     FP32Linear,
     configure_linear_workers,
     promote_linears,
 )
 
-from flag_gems.runtime.backend._arm.quantized_linear.sme2.cpu_accumulation import (
-    enable_fp32_accumulation,
-)
+
+def test_reference_baseline_does_not_import_flaggems():
+    code = """
+import sys
+import torch
+from types import SimpleNamespace
+from qwen_image_cpu import reference
+from qwen_image_cpu.torch_baseline import audit
+model = torch.nn.Linear(8, 8).bfloat16()
+pipe = SimpleNamespace(transformer=model, vae=torch.nn.Conv2d(1, 1, 1).bfloat16(), text_encoder=None)
+reference.prepare_cpu_pipeline(pipe)
+assert audit(pipe)['flag_gems_imports'] == []
+"""
+    result = subprocess.run(
+        [sys.executable, "-c", code], capture_output=True, text=True
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
 
 
 @pytest.mark.parametrize("axis", [0, 1])

@@ -25,10 +25,10 @@ time. No static activation calibration, GPTQ, AWQ or rotation is used.
 
 ## Export
 
-From the FlagGems repository with torch and safetensors installed:
+From the runtime repository with the prepared environment:
 
 ```bash
-PYTHONPATH=examples/qwen_image_cpu python -m qwen_image_cpu.export_w8 \
+PYTHONPATH=src python -m qwen_image_cpu.export_w8 \
   --source "$HOME/Qwen-Image-2.1-0920" \
   --output "$HOME/Qwen-Image-2.1-0920-W8A8-PerChannel-112"
 ```
@@ -42,7 +42,7 @@ finished; it does not itself certify image quality.
 
 ## Validation
 
-With the CPU inference environment configured as in README.md:
+With the CPU inference environment configured as in MODEL_CARD_MAC.md:
 
 ```bash
 python -m qwen_image_cpu.validate_w8 \
