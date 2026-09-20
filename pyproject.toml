@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "flagos-macos-qwen-image"
+version = "0.1.0"
+description = "Qwen-Image model integration for the FlagOS macOS PyTorch CPU runtime"
+requires-python = ">=3.11"
+dependencies = [
+  "torch==2.11.0",
+  "transformers==4.57.6",
+  "huggingface-hub==0.36.2",
+  "accelerate",
+  "safetensors",
+  "Pillow",
+]
+
+[project.scripts]
+qwen-image = "qwen_image_cpu.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["qwen_image_cpu*"]
+

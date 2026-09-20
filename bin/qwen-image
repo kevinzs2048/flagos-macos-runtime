@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+QWEN_RUNTIME_ROOT="$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+QWEN_PYTHON="${QWEN_IMAGE_PYTHON:-python3}"
+export PYTHONPATH="$QWEN_RUNTIME_ROOT/src${PYTHONPATH:+:$PYTHONPATH}"
+source "$QWEN_RUNTIME_ROOT/profiles/qwen-image-m5-pro.env"
+exec "$QWEN_PYTHON" -m qwen_image_cpu "$@"
+

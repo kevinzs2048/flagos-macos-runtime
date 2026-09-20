@@ -1,5 +1,14 @@
 # FlagOS macOS W4A8 Runtime
 
+## Qwen-Image PyTorch CPU integration
+
+This repository also owns the independent Qwen-Image-2.1 W8A8 model adapter,
+checkpoint loading, Mac launcher and image regression tests. See
+[Qwen-Image on Mac](docs/qwen_image/MODEL_CARD_MAC.md) and
+[code ownership and setup](docs/qwen_image/INTEGRATION.md).
+Its launcher is `bin/qwen-image`; the existing vLLM runtime and release
+installer below do not include this new source integration.
+
 Native Apple M5 Pro Runtime for Qwen3.8-27B W4A8 G128 inference with the
 standard vLLM CLI. It packages the validated Python environment, vLLM 0.20.2,
 Triton CPU, FlagGems, vLLM-Plugin-FL, libtriton_jit and the required native

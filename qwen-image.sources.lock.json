@@ -1,0 +1,35 @@
+{
+  "profile": "qwen-image-2.1-same112-m5-pro-pytorch-cpu",
+  "hardware": "Apple M5 Pro, 18 CPUs, 64 GiB, SME2 SVL512",
+  "flag_gems": {
+    "revision": "94f9c4d0e49cc72d3ae50c96b170270156600487",
+    "repository": "https://github.com/flagos-ai/FlagGems",
+    "status": "local development commit; not published"
+  },
+  "flagtree_cpu": {
+    "revision": "de687051c74659546398840edde19dfb9bdda52c",
+    "status": "unchanged by ownership migration"
+  },
+  "reference_diffusers": {
+    "revision": "9511e982f22ea8fcc64faf277d90b3a21f8a83f6",
+    "source": "user-supplied Qwen-Image-2.1 reference archive",
+    "python_tree_sha256": "fc3e458a805f384c26fc9daa7ccdd8d763cc082fcc46fc7c592fdac292748f11",
+    "tree_hash_algorithm": "sorted *.py relative POSIX path + NUL + binary SHA256(file), combined SHA256"
+  },
+  "kleidiai": {
+    "version": "1.29.0",
+    "revision": "13cd359",
+    "library_sha256": "2d8c7a8f0b06c168f006a2eeacb07951f1c4df13af10a6239111cdd6e520b56b"
+  },
+  "python_packages": {
+    "torch": "2.11.0",
+    "transformers": "4.57.6",
+    "huggingface-hub": "0.36.2",
+    "accelerate": "1.15.0",
+    "safetensors": "0.8.0",
+    "Pillow": "12.3.0",
+    "numpy": "2.3.5",
+    "filelock": "3.32.3"
+  },
+  "release_scope": "Source integration and Python adapter wheel; not a self-contained public runtime installer"
+}
