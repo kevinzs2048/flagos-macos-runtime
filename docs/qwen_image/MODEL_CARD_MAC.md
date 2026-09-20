@@ -152,6 +152,13 @@ in `result.json`.
 
 ## Measured performance
 
+The exact generation example above was also replayed on the original validation
+Mac with **no warmup**: it produced a 1024 × 1024 image in **767.82 seconds** of
+resident inference, **785.01 seconds** for the whole command, with all 4,480 W8
+GEMM calls verified. This used the existing prepared environment and build caches;
+clean-machine installation has not been validated.
+[README verification report](https://github.com/kevinzs2048/flagos-macos-runtime/blob/qwen_image/docs/qwen_image/README_VERIFICATION.md).
+
 Apple M5 Pro / 64 GiB, CPU only, batch one, September 20, 2026.
 The final repository-integration regression used 40 denoising steps, CFG=1,
 seed 42, prefix KV caching and a two-step warmup.
@@ -198,7 +205,7 @@ passed against an integer reference. Transformer prediction differences from
 BF16 were measured with identical inputs at steps 1, 20 and 40.
 
 Pixel equality verifies the repository migration, not lossless quantization
-against BF16. Image checks for these new weights currently cover one prompt;
+against BF16. Image checks for these new weights currently cover two prompts;
 text rendering still has letter-shape errors. A complete 100-prompt image-quality
 evaluation of this checkpoint has not been completed.
 
@@ -211,6 +218,7 @@ These files are included in the validated model directory:
 
 - [1024 × 1024, 40 steps](validation/runtime-migration/1024-40.png)
 - [512 × 512, 40 steps](validation/runtime-migration/512-40.png)
+- [README capybara example, 1024 × 1024, 40 steps](validation/readme-1024-40/result.png)
 - [Numerical validation](validation/precision.json)
 
 ## Technical overview
