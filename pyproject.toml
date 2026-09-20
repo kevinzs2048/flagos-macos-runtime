@@ -22,4 +22,3 @@ qwen-image = "qwen_image_cpu.__main__:main"
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["qwen_image_cpu*"]
-
