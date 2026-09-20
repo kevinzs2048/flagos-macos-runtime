@@ -31,7 +31,11 @@ Triton kernels.
 - Runtime application revision: `639acd38459a4d58abf4a8374aaa31734a668a20`.
 - Runtime branch: `codex/qwen-image-pytorch-cpu`.
 - Dependency revisions and component hashes: `qwen-image.sources.lock.json`.
-- The migration is committed locally and has not been pushed or published.
+- Source publication branch: `awen_image` in
+  [kevinzs2048/FlagGems](https://github.com/kevinzs2048/FlagGems/tree/awen_image) and
+  [kevinzs2048/flagos-macos-runtime](https://github.com/kevinzs2048/flagos-macos-runtime/tree/awen_image).
+  The FlagGems organization repository did not grant write access to the publishing account.
+  This is source publication, not a packaged runtime release.
 
 An AST comparison checked all 104 original top-level functions/classes across
 the migrated modules: their bodies are unchanged after excluding import nodes.

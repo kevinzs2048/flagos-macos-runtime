@@ -3,8 +3,9 @@
   "hardware": "Apple M5 Pro, 18 CPUs, 64 GiB, SME2 SVL512",
   "flag_gems": {
     "revision": "4fe54663c8a70949ae2346d48a209bc49bedc1e9",
-    "repository": "https://github.com/flagos-ai/FlagGems",
-    "status": "local development commit; not published"
+    "repository": "https://github.com/kevinzs2048/FlagGems",
+    "status": "development source published to user fork; not an upstream release",
+    "branch": "awen_image"
   },
   "flagtree_cpu": {
     "revision": "de687051c74659546398840edde19dfb9bdda52c",
