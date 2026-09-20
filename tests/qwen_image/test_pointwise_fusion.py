@@ -1,12 +1,12 @@
 import pytest
 import torch
-from qwen_image_cpu.pointwise_fusion import enable_swiglu
-from torch.nn import functional as F
-
 from flag_gems.runtime.backend._arm.quantized_linear.sme2.pointwise import (
     ops,
     silu_table,
 )
+from torch.nn import functional as F
+
+from qwen_image_cpu.pointwise_fusion import enable_swiglu
 
 
 @pytest.mark.parametrize("shape", [(0, 17), (1, 1), (3, 7), (129, 97), (1024, 12288)])
@@ -37,11 +37,10 @@ def test_all_encodings_and_subnormal_infinity_nan_behavior():
 
 @torch.inference_mode()
 def test_adapter_preserves_model_parameters_and_matches_reference():
-    from qwen_image_cpu.reference import transformer_source
-
-    from flag_gems.runtime.backend._arm.quantized_linear.sme2.cpu_accumulation import (
+    from qwen_image_cpu.cpu_accumulation import (
         enable_fp32_accumulation,
     )
+    from qwen_image_cpu.reference import transformer_source
 
     torch.set_num_threads(4)
     torch.manual_seed(316)
@@ -78,14 +77,14 @@ def test_fused_pack_matches_library_bytes(m, k):
 
 @torch.no_grad()
 def test_packed_adapter_and_weight_cache_invalidation():
-    from qwen_image_cpu.reference import transformer_source
-
     from flag_gems.runtime.backend._arm.quantized_linear.sme2.bf16_sme import (
         enable_bf16_sme,
     )
-    from flag_gems.runtime.backend._arm.quantized_linear.sme2.cpu_accumulation import (
+
+    from qwen_image_cpu.cpu_accumulation import (
         enable_fp32_accumulation,
     )
+    from qwen_image_cpu.reference import transformer_source
 
     torch.set_num_threads(4)
     torch.manual_seed(319)

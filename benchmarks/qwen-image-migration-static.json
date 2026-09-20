@@ -1,0 +1,15 @@
+{
+  "pre_migration_flaggems_revision": "ae5abcbd",
+  "function_or_class_bodies_identical_excluding_imports": 104,
+  "native_cpp_assembly_changes": false,
+  "flag_tree_changes": false,
+  "flag_gems_revision": "4fe54663c8a70949ae2346d48a209bc49bedc1e9",
+  "runtime_revision": "639acd38459a4d58abf4a8374aaa31734a668a20",
+  "wheel_sha256": "18bd57ed96e4023796de8606993fb502b3c479e03e4c4e36588d83a778d23030",
+  "wheel_bytes": 58229,
+  "test_counts": {
+    "flag_gems": 209,
+    "runtime": 171
+  },
+  "notes": "Function bodies are compared structurally with import nodes removed. Module locations and imports changed; no kernel arithmetic changes."
+}

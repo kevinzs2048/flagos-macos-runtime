@@ -114,6 +114,15 @@ writing. Each row is a single measured request. Both requests executed 112
 distinct W8 Linear modules and 4,480 W8 GEMMs. These measurements are image
 generation latency, rather than language-model token throughput.
 
+## Runtime integration regression
+
+The model application now lives in `flagos-macos-runtime`, and reusable
+operator code lives in the FlagGems source package. After migration, the
+512/40 and 1024/40 requests took **157.05 s** and **770.92 s**, respectively,
+with images pixel-identical to the original requests above. The combined
+operator/model regression suites passed **380 tests**. These are individual
+measurements; timing differences are not proof of a migration speedup.
+
 ## Validation
 
 The export and numerical validation regression suite passed 36 tests. Twelve

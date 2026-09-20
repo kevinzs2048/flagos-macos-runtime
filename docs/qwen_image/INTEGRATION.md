@@ -13,6 +13,7 @@ direction is runtime -> FlagGems; FlagGems does not import this model package.
 | Compiler/lowering support | FlagTree-CPU, unchanged by this migration |
 | Qwen W8 checkpoint schema, layer selection and loading | Runtime `src/qwen_image_cpu/w8a8_sme.py` |
 | Reference Diffusers compatibility and CPU adaptation | Runtime `src/qwen_image_cpu/reference.py` |
+| Pure ATen FP32 precision compatibility, also used by the baseline | Runtime `src/qwen_image_cpu/cpu_accumulation.py` |
 | Model-specific fusion wiring and shared modulation | Runtime `src/qwen_image_cpu/` adapter modules |
 | Image request orchestration | Runtime `src/qwen_image_cpu/pipeline.py` and `__main__.py` |
 | Mac environment defaults and launcher | Runtime `profiles/qwen-image-m5-pro.env`, `bin/qwen-image` |

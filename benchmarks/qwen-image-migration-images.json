@@ -1,0 +1,66 @@
+{
+  "runtime_revision": "639acd38459a4d58abf4a8374aaa31734a668a20",
+  "source_lock": {
+    "profile": "qwen-image-2.1-same112-m5-pro-pytorch-cpu",
+    "hardware": "Apple M5 Pro, 18 CPUs, 64 GiB, SME2 SVL512",
+    "flag_gems": {
+      "revision": "4fe54663c8a70949ae2346d48a209bc49bedc1e9",
+      "repository": "https://github.com/flagos-ai/FlagGems",
+      "status": "local development commit; not published"
+    },
+    "flagtree_cpu": {
+      "revision": "de687051c74659546398840edde19dfb9bdda52c",
+      "status": "unchanged by ownership migration"
+    },
+    "reference_diffusers": {
+      "revision": "9511e982f22ea8fcc64faf277d90b3a21f8a83f6",
+      "source": "user-supplied Qwen-Image-2.1 reference archive",
+      "python_tree_sha256": "fc3e458a805f384c26fc9daa7ccdd8d763cc082fcc46fc7c592fdac292748f11",
+      "tree_hash_algorithm": "sorted *.py relative POSIX path + NUL + binary SHA256(file), combined SHA256"
+    },
+    "kleidiai": {
+      "version": "1.29.0",
+      "revision": "13cd359",
+      "library_sha256": "2d8c7a8f0b06c168f006a2eeacb07951f1c4df13af10a6239111cdd6e520b56b"
+    },
+    "python_packages": {
+      "torch": "2.11.0",
+      "transformers": "4.57.6",
+      "huggingface-hub": "0.36.2",
+      "accelerate": "1.15.0",
+      "safetensors": "0.8.0",
+      "Pillow": "12.3.0",
+      "numpy": "2.3.5",
+      "filelock": "3.32.3"
+    },
+    "release_scope": "Source integration and Python adapter wheel; not a self-contained public runtime installer"
+  },
+  "baseline": "/Users/kevin/qwen-image-2.1-repos/validation/qwen-0920",
+  "status": "complete",
+  "requests": [
+    {
+      "resolution": 512,
+      "steps": 40,
+      "resident_seconds": 157.0523858750239,
+      "baseline_seconds": 158.75976412487216,
+      "latency_change_percent": -1.0754477113642746,
+      "pixel_sha256": "4d1f633db5fa5e6306d3b8e20b3b119c1e1141e28ee618cdf1d0a5a7291f992e",
+      "pixel_parity": true,
+      "distinct_w8_modules": 112,
+      "native_w8_gemm_calls": 4480,
+      "result": "/Users/kevin/qwen-image-2.1-repos/validation/runtime-migration-final/512-40.json"
+    },
+    {
+      "resolution": 1024,
+      "steps": 40,
+      "resident_seconds": 770.919407625217,
+      "baseline_seconds": 811.2846802920103,
+      "latency_change_percent": -4.975475766689497,
+      "pixel_sha256": "f7e0a36ad705200098d94202b2f295e8aa8d338a07c49a00c93bb30d8bc02f14",
+      "pixel_parity": true,
+      "distinct_w8_modules": 112,
+      "native_w8_gemm_calls": 4480,
+      "result": "/Users/kevin/qwen-image-2.1-repos/validation/runtime-migration-final/1024-40.json"
+    }
+  ]
+}
