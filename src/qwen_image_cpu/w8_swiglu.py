@@ -96,7 +96,7 @@ def enable(module, mt=64, nt=256):
                     prepare_neon_pair,
                 )
 
-                hw, clusters, mt, nt, dt = self._wavefront_swiglu_policy
+                hw, clusters, mt, nt, dt, drain_tail = self._wavefront_swiglu_policy
                 out = native.run_wavefront(
                     w8.repack_neon_lhs(a8, m, k),
                     *prepare_neon_pair(self.gate_layer, self.proj),
@@ -111,6 +111,7 @@ def enable(module, mt=64, nt=256):
                     mt,
                     nt,
                     dt,
+                    drain_tail,
                 )
                 self._wavefront_swiglu_calls += 1
                 return out.reshape(*x.shape[:-1], self.out.out_features)
@@ -266,7 +267,13 @@ def select_hybrid(module, enabled):
 
 @torch.no_grad()
 def configure_wavefront(
-    module, *, cpu_clusters, workers=18, tile=(32, 128, 256), enabled=True
+    module,
+    *,
+    cpu_clusters,
+    workers=18,
+    tile=(32, 128, 256),
+    enabled=True,
+    drain_tail=False,
 ):
     from flag_gems.runtime.backend._arm.quantized_linear.sme2.hybrid_swiglu import (
         prepare_neon_pair,
@@ -274,6 +281,8 @@ def configure_wavefront(
 
     if type(workers) is not int or not 1 <= workers <= torch.get_num_threads():
         raise ValueError("Invalid worker count")
+    if type(drain_tail) is not bool:
+        raise ValueError("drain_tail must be a boolean")
     if (
         cpu_clusters.device.type != "cpu"
         or cpu_clusters.dtype != torch.long
@@ -303,7 +312,12 @@ def configure_wavefront(
     for layer in layers:
         prepare_neon_pair(layer.gate_layer, layer.proj)
     for layer in layers:
-        layer._wavefront_swiglu_policy = (workers, cpu_clusters.clone(), *tile)
+        layer._wavefront_swiglu_policy = (
+            workers,
+            cpu_clusters.clone(),
+            *tile,
+            drain_tail,
+        )
         layer._wavefront_swiglu_calls = 0
         layer._wavefront_swiglu_enabled = bool(enabled)
         if enabled:

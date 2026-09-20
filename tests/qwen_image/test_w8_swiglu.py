@@ -98,6 +98,7 @@ def test_model_adapter_and_accuracy_diagnostic_fallbacks():
             workers=4,
             cpu_clusters=torch.zeros(os.cpu_count(), dtype=torch.long),
             enabled=False,
+            drain_tail=True,
         )
         == 1
     )

@@ -19,6 +19,14 @@ def main():
     parser.add_argument("--workers", type=int, default=18)
     parser.add_argument("--fraction", type=float, default=0.375)
     parser.add_argument("--wavefront", action="store_true")
+    parser.add_argument("--drain-tail", action="store_true")
+    parser.add_argument(
+        "--wavefront-tile",
+        type=int,
+        nargs=3,
+        default=[32, 128, 256],
+        metavar=("M", "N", "DOWN_N"),
+    )
     parser.add_argument(
         "--mlp-stride",
         type=int,
@@ -85,6 +93,8 @@ def main():
         enabled=False,
     )
     if args.wavefront:
+        kwargs["drain_tail"] = args.drain_tail
+        kwargs["tile"] = tuple(args.wavefront_tile)
         if args.mlp_stride < 1:
             raise ValueError("MLP stride must be positive")
         targets = [
@@ -170,9 +180,14 @@ def main():
                                 "mode": "wavefront" if args.wavefront else "split_n",
                                 "workers": args.workers,
                                 "active_mlps": configured,
+                                "drain_tail": (
+                                    args.drain_tail if args.wavefront else False
+                                ),
                                 "mlp_stride": args.mlp_stride,
                                 "fraction": None if args.wavefront else args.fraction,
-                                "tile": [32, 128, 256] if args.wavefront else [32, 64],
+                                "tile": (
+                                    args.wavefront_tile if args.wavefront else [32, 64]
+                                ),
                             },
                             "rows": rows,
                         },

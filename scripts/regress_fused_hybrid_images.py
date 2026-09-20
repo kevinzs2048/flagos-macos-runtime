@@ -15,6 +15,15 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--order", default="mixed,native")
     parser.add_argument("--wavefront", action="store_true")
+    parser.add_argument("--workers", type=int, default=18)
+    parser.add_argument(
+        "--wavefront-tile",
+        type=int,
+        nargs=3,
+        default=[32, 128, 256],
+        metavar=("M", "N", "DOWN_N"),
+    )
+    parser.add_argument("--drain-tail", action="store_true")
     args = parser.parse_args()
     order = args.order.split(",")
     if sorted(order) != ["mixed", "native"]:
@@ -36,11 +45,12 @@ def main():
 
     pipe, provider, metadata = load_pipeline(config["model"])
     policy = dict(
-        workers=18,
+        workers=args.workers,
         cpu_clusters=torch.tensor([0] * 6 + [1] * 6 + [2] * 6),
         enabled=False,
     )
     if args.wavefront:
+        policy.update(tile=tuple(args.wavefront_tile), drain_tail=args.drain_tail)
         configured = configure_wavefront(pipe.transformer, **policy)
         select_policy = select_wavefront
         counter = "_wavefront_swiglu_calls"
@@ -56,6 +66,9 @@ def main():
         metadata=metadata,
         order=order,
         mixed_policy="wavefront" if args.wavefront else "split_n",
+        mixed_workers=args.workers,
+        wavefront_tile=args.wavefront_tile if args.wavefront else None,
+        drain_tail=args.drain_tail if args.wavefront else False,
         scope="Same process, same weights/prompt/seed, 2-step warmup before each 40-step image; one sample per mode",
         expected_pixel_sha256=baseline["requests"][0]["pixel_sha256"],
         requests=[],

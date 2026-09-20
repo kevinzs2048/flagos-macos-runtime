@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Explore a single-team NEON-W8 / SME2-BF16 row pipeline on real model data."""
 import argparse
+import itertools
 import json
 from pathlib import Path
 import statistics
@@ -14,6 +15,11 @@ def main():
     p.add_argument("--capture", type=Path, required=True)
     p.add_argument("--output", type=Path, required=True)
     p.add_argument("--groups", type=int, default=4)
+    p.add_argument("--workers", type=int, nargs="+", default=[12, 18])
+    p.add_argument("--row-tiles", type=int, nargs="+", default=[32, 64, 128])
+    p.add_argument("--column-tiles", type=int, nargs="+", default=[128])
+    p.add_argument("--down-tiles", type=int, nargs="+", default=[256])
+    p.add_argument("--compare-drain", action="store_true")
     a = p.parse_args()
     torch.set_num_threads(18)
     torch.set_num_interop_threads(1)
@@ -43,19 +49,24 @@ def main():
         if policy is None:
             packed = fused.run(lhs, *full, table, m, n, k, 12, 64, 256)
             return down.matmul(packed, rhs, m, d, n, 12, 32, 256)
-        workers, mt, nt, dt = policy
+        workers, mt, nt, dt, drain_tail = policy
         nl = w8.repack_neon_lhs(lhs, m, k)
         return fused.run_wavefront(
-            nl, *neon, rhs, table, m, n, k, d, workers, clusters, mt, nt, dt
+            nl, *neon, rhs, table, m, n, k, d, workers, clusters, mt, nt, dt, drain_tail
         )
 
     gold = run(None)
     for _ in range(16):
         run(None)
     results = []
-    for workers in [12, 18]:
-        for mt in [32, 64, 128]:
-            policy = (workers, mt, 128, 256)
+    for workers in a.workers:
+        for mt, nt, dt, drain in itertools.product(
+            a.row_tiles,
+            a.column_tiles,
+            a.down_tiles,
+            [False, True] if a.compare_drain else [False],
+        ):
+            policy = (workers, mt, nt, dt, drain)
             for _ in range(2):
                 assert torch.equal(run(policy), gold)
             rows = []
