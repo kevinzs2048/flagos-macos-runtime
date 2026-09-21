@@ -24,6 +24,8 @@ def main():
         metavar=("M", "N", "DOWN_N"),
     )
     parser.add_argument("--drain-tail", action="store_true")
+    parser.add_argument("--neon-workers", type=int, default=0)
+    parser.add_argument("--idle-us", type=int, default=0)
     args = parser.parse_args()
     order = args.order.split(",")
     if sorted(order) != ["mixed", "native"]:
@@ -50,7 +52,12 @@ def main():
         enabled=False,
     )
     if args.wavefront:
-        policy.update(tile=tuple(args.wavefront_tile), drain_tail=args.drain_tail)
+        policy.update(
+            tile=tuple(args.wavefront_tile),
+            drain_tail=args.drain_tail,
+            neon_workers=args.neon_workers,
+            idle_us=args.idle_us,
+        )
         configured = configure_wavefront(pipe.transformer, **policy)
         select_policy = select_wavefront
         counter = "_wavefront_swiglu_calls"
@@ -67,6 +74,8 @@ def main():
         order=order,
         mixed_policy="wavefront" if args.wavefront else "split_n",
         mixed_workers=args.workers,
+        neon_workers=args.neon_workers if args.wavefront else None,
+        idle_us=args.idle_us if args.wavefront else None,
         wavefront_tile=args.wavefront_tile if args.wavefront else None,
         drain_tail=args.drain_tail if args.wavefront else False,
         scope="Same process, same weights/prompt/seed, 2-step warmup before each 40-step image; one sample per mode",

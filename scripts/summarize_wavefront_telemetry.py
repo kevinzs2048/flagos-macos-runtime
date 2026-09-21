@@ -26,9 +26,16 @@ def main():
         ):
             continue
         row = rows[completed]
-        groups[(row["group"], row["mixed"])].append((dt, current["metrics"]))
+        groups[
+            (
+                row["group"],
+                row["mixed"],
+                row.get("neon_workers") or 0,
+                row.get("idle_us") or 0,
+            )
+        ].append((dt, current["metrics"]))
     result = []
-    for (group, mixed), contained in sorted(groups.items()):
+    for (group, mixed, neon_workers, idle_us), contained in sorted(groups.items()):
         seconds = sum(dt for dt, _ in contained)
         metrics = {
             key: sum(dt * m[key] for dt, m in contained) / seconds
@@ -46,6 +53,8 @@ def main():
             dict(
                 group=group,
                 mixed=mixed,
+                neon_workers=neon_workers if mixed else None,
+                idle_us=idle_us if mixed else None,
                 samples=len(contained),
                 sampled_seconds=seconds,
                 means=metrics,

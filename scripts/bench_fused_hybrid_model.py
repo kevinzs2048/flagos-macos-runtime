@@ -20,6 +20,20 @@ def main():
     parser.add_argument("--fraction", type=float, default=0.375)
     parser.add_argument("--wavefront", action="store_true")
     parser.add_argument("--drain-tail", action="store_true")
+    parser.add_argument("--neon-workers", type=int, default=0)
+    parser.add_argument("--idle-us", type=int, default=0)
+    parser.add_argument(
+        "--idle-sequence",
+        type=int,
+        nargs="+",
+        help="Compare idle waits with one fixed NEON worker limit",
+    )
+    parser.add_argument(
+        "--neon-worker-sequence",
+        type=int,
+        nargs="+",
+        help="Compare multiple wavefront role limits with mirrored rotating orders",
+    )
     parser.add_argument(
         "--wavefront-tile",
         type=int,
@@ -34,6 +48,10 @@ def main():
         help="Enable one W8 MLP per N blocks to limit mixed-compute duty",
     )
     args = parser.parse_args()
+    if (args.neon_worker_sequence or args.idle_sequence) and not args.wavefront:
+        parser.error("policy sequences require --wavefront")
+    if args.neon_worker_sequence and args.idle_sequence:
+        parser.error("select either NEON-worker or idle-wait sequence")
     args.output.parent.mkdir(parents=True, exist_ok=True)
     torch.set_num_interop_threads(1)
     from qwen_image_cpu.pipeline import generate, load_pipeline
@@ -94,6 +112,8 @@ def main():
     )
     if args.wavefront:
         kwargs["drain_tail"] = args.drain_tail
+        kwargs["neon_workers"] = args.neon_workers
+        kwargs["idle_us"] = args.idle_us
         kwargs["tile"] = tuple(args.wavefront_tile)
         if args.mlp_stride < 1:
             raise ValueError("MLP stride must be positive")
@@ -145,11 +165,34 @@ def main():
     rows = []
     try:
         for group in range(args.groups):
-            for mixed in (
-                [False, True, True, False]
-                if group % 2 == 0
-                else [True, False, False, True]
-            ):
+            if args.neon_worker_sequence or args.idle_sequence:
+                modes = [(False, 0, 0)] + (
+                    [(True, n, args.idle_us) for n in args.neon_worker_sequence]
+                    if args.neon_worker_sequence
+                    else [
+                        (True, args.neon_workers, idle) for idle in args.idle_sequence
+                    ]
+                )
+                offset = group % len(modes)
+                modes = modes[offset:] + modes[:offset]
+                sequence = modes + modes[::-1]
+            else:
+                sequence = [
+                    (mixed, args.neon_workers, args.idle_us)
+                    for mixed in (
+                        [False, True, True, False]
+                        if group % 2 == 0
+                        else [True, False, False, True]
+                    )
+                ]
+            for mixed, neon_workers, idle_us in sequence:
+                if mixed and (args.neon_worker_sequence or args.idle_sequence):
+                    kwargs["neon_workers"] = neon_workers
+                    kwargs["idle_us"] = idle_us
+                    assert (
+                        sum(configure_wavefront(layer, **kwargs) for layer in targets)
+                        == configured
+                    )
                 select_policy(model, mixed)
                 totals.clear()
                 provider.reset()
@@ -165,6 +208,8 @@ def main():
                 row = dict(
                     group=group,
                     mixed=mixed,
+                    neon_workers=neon_workers if mixed and args.wavefront else None,
+                    idle_us=idle_us if mixed and args.wavefront else None,
                     seconds=elapsed,
                     operators_seconds=dict(totals),
                     hybrid_mlp_calls=hybrid_calls,
@@ -180,6 +225,12 @@ def main():
                                 "mode": "wavefront" if args.wavefront else "split_n",
                                 "workers": args.workers,
                                 "active_mlps": configured,
+                                "neon_worker_sequence": args.neon_worker_sequence,
+                                "idle_sequence": args.idle_sequence,
+                                "idle_us": args.idle_us if args.wavefront else None,
+                                "neon_workers": (
+                                    args.neon_workers if args.wavefront else None
+                                ),
                                 "drain_tail": (
                                     args.drain_tail if args.wavefront else False
                                 ),
@@ -199,9 +250,12 @@ def main():
     finally:
         for namespace, name, original in originals:
             setattr(namespace, name, original)
+    labels = lambda r: (
+        f"neon{r['neon_workers']}:idle{r['idle_us']}" if r["mixed"] else "native"
+    )
     means = {
-        str(mixed): statistics.mean(r["seconds"] for r in rows if r["mixed"] == mixed)
-        for mixed in (False, True)
+        label: statistics.mean(r["seconds"] for r in rows if labels(r) == label)
+        for label in sorted(set(labels(r) for r in rows))
     }
     print("MEANS", means, flush=True)
 

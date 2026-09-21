@@ -20,6 +20,8 @@ def main():
     p.add_argument("--column-tiles", type=int, nargs="+", default=[128])
     p.add_argument("--down-tiles", type=int, nargs="+", default=[256])
     p.add_argument("--compare-drain", action="store_true")
+    p.add_argument("--neon-workers", type=int, nargs="+", default=[0])
+    p.add_argument("--idle-us", type=int, nargs="+", default=[0])
     a = p.parse_args()
     torch.set_num_threads(18)
     torch.set_num_interop_threads(1)
@@ -49,10 +51,25 @@ def main():
         if policy is None:
             packed = fused.run(lhs, *full, table, m, n, k, 12, 64, 256)
             return down.matmul(packed, rhs, m, d, n, 12, 32, 256)
-        workers, mt, nt, dt, drain_tail = policy
+        workers, mt, nt, dt, drain_tail, neon_workers, idle_us = policy
         nl = w8.repack_neon_lhs(lhs, m, k)
         return fused.run_wavefront(
-            nl, *neon, rhs, table, m, n, k, d, workers, clusters, mt, nt, dt, drain_tail
+            nl,
+            *neon,
+            rhs,
+            table,
+            m,
+            n,
+            k,
+            d,
+            workers,
+            clusters,
+            mt,
+            nt,
+            dt,
+            drain_tail,
+            neon_workers,
+            idle_us,
         )
 
     gold = run(None)
@@ -60,13 +77,15 @@ def main():
         run(None)
     results = []
     for workers in a.workers:
-        for mt, nt, dt, drain in itertools.product(
+        for mt, nt, dt, drain, neon_workers, idle_us in itertools.product(
             a.row_tiles,
             a.column_tiles,
             a.down_tiles,
             [False, True] if a.compare_drain else [False],
+            a.neon_workers,
+            a.idle_us,
         ):
-            policy = (workers, mt, nt, dt, drain)
+            policy = (workers, mt, nt, dt, drain, neon_workers, idle_us)
             for _ in range(2):
                 assert torch.equal(run(policy), gold)
             rows = []

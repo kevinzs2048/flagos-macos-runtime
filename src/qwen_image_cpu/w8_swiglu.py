@@ -96,7 +96,9 @@ def enable(module, mt=64, nt=256):
                     prepare_neon_pair,
                 )
 
-                hw, clusters, mt, nt, dt, drain_tail = self._wavefront_swiglu_policy
+                hw, clusters, mt, nt, dt, drain_tail, neon_workers, idle_us = (
+                    self._wavefront_swiglu_policy
+                )
                 out = native.run_wavefront(
                     w8.repack_neon_lhs(a8, m, k),
                     *prepare_neon_pair(self.gate_layer, self.proj),
@@ -112,6 +114,8 @@ def enable(module, mt=64, nt=256):
                     nt,
                     dt,
                     drain_tail,
+                    min(neon_workers, torch.get_num_threads()),
+                    idle_us,
                 )
                 self._wavefront_swiglu_calls += 1
                 return out.reshape(*x.shape[:-1], self.out.out_features)
@@ -274,6 +278,8 @@ def configure_wavefront(
     tile=(32, 128, 256),
     enabled=True,
     drain_tail=False,
+    neon_workers=0,
+    idle_us=0,
 ):
     from flag_gems.runtime.backend._arm.quantized_linear.sme2.hybrid_swiglu import (
         prepare_neon_pair,
@@ -283,6 +289,10 @@ def configure_wavefront(
         raise ValueError("Invalid worker count")
     if type(drain_tail) is not bool:
         raise ValueError("drain_tail must be a boolean")
+    if type(neon_workers) is not int or not 0 <= neon_workers <= workers:
+        raise ValueError("Invalid NEON worker limit")
+    if type(idle_us) is not int or not 0 <= idle_us <= 1000:
+        raise ValueError("Invalid idle wait duration")
     if (
         cpu_clusters.device.type != "cpu"
         or cpu_clusters.dtype != torch.long
@@ -317,6 +327,8 @@ def configure_wavefront(
             cpu_clusters.clone(),
             *tile,
             drain_tail,
+            neon_workers,
+            idle_us,
         )
         layer._wavefront_swiglu_calls = 0
         layer._wavefront_swiglu_enabled = bool(enabled)
