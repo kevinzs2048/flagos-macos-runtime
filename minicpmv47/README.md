@@ -122,7 +122,7 @@ base image being preinstalled.
 python3 minicpmv47/scripts/stage_runtime.py \
   --runtime /verified/runtime --triton /verified/triton \
   --installed /verified/installed-prefix --wheels /verified/two-wheels \
-  --cpu-tle-source /locked/flagtree/python/triton/language/extra/cpu/tle_ops.py \
+  --cpu-tle-source /locked/flagtree/third_party/cpu/language/cpu/tle_ops.py \
   --output /new/staging/runtime
 # Linux also requires --vllm /verified/vllm-package-directory.
 # macOS: relocate and ad-hoc sign the staged Mach-O files, then validate.
