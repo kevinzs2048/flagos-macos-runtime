@@ -5,6 +5,9 @@ FlagGems, FlagTree CPU (Triton 3.7.2), and vllm-plugin-FL. Component commits
 are pinned in `sources.lock.json`. The vLLM core is unchanged. Model and
 processor adaptation lives in the plugin; operators live in FlagGems.
 
+Package qualification and remaining performance limitations are recorded in
+[VALIDATION.md](VALIDATION.md).
+
 Supported checkpoints:
 
 * MiniCPM-V-4.7-35B-A3B: W4A8 G32, with W8A8 output head.
