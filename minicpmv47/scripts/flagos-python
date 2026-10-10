@@ -42,6 +42,13 @@ export TORCH_EXTENSIONS_DIR="$FLAGOS_CACHE_DIR/torch"
 export XDG_CACHE_HOME="$FLAGOS_CACHE_DIR/generic"
 export TORCHINDUCTOR_CACHE_DIR="$FLAGOS_CACHE_DIR/inductor"
 export VLLM_CACHE_ROOT="$FLAGOS_CACHE_DIR/vllm"
+# Unix socket paths have a much smaller limit than ordinary filesystem paths.
+# Keep RPC separate from potentially deeply nested compilation caches.
+if [ -z "${VLLM_RPC_BASE_PATH:-}" ]; then
+  export VLLM_RPC_BASE_PATH=$(mktemp -d /tmp/flagos-rpc.XXXXXX)
+else
+  mkdir -p "$VLLM_RPC_BASE_PATH"
+fi
 export FLAGOS_FONT_PATH="$ROOT/share/fonts/DejaVuSans.ttf"
 if [ "$PROFILE" = 35b ]; then
   export MINICPM_EXPERT_MMAP_DIR=${MINICPM_EXPERT_MMAP_DIR:-"$FLAGOS_CACHE_DIR/experts-35b"}
