@@ -127,6 +127,8 @@ python3 minicpmv47/scripts/stage_runtime.py \
 # Linux also requires --vllm /verified/vllm-package-directory.
 # macOS: relocate and ad-hoc sign the staged Mach-O files, then validate.
 python3 scripts/relocate_macho.py /new/staging/runtime
+python3 minicpmv47/scripts/export_macos.py --runtime /new/staging/runtime \
+  --output /new/artifacts/flagos-minicpmv47-macos-arm64-20261011.tar.gz
 # Linux: put Dockerfile.cix-p1 next to runtime/ in a build context.
 sudo docker build --network host \
   --build-arg FLAGGEMS_COMMIT=ae1a81c716445ff71d0a8b2a979fa9ded6f3d2c7 \
