@@ -16,6 +16,11 @@ if [ "$(uname -s)" = Darwin ]; then
 else
   PYROOT="$ROOT/venv"
   unset PYTHONHOME
+  # A present VLLM_CPU_KVCACHE_SPACE overrides the explicit CLI byte budget.
+  # Remove the empty inherited base default rather than inventing a GiB value.
+  if [ -z "${VLLM_CPU_KVCACHE_SPACE:-}" ]; then
+    unset VLLM_CPU_KVCACHE_SPACE
+  fi
   export GLOO_SOCKET_IFNAME=lo
   if [ -f "$ROOT/lib/libtcmalloc_minimal.so.4" ]; then
     export LD_PRELOAD="$ROOT/lib/libtcmalloc_minimal.so.4"
