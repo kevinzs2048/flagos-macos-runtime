@@ -64,6 +64,9 @@ For 1B change `FLAGOS_PROFILE=1b` and the checkpoint mount. CPU placement above
 matches the tested P1 core numbering; verify topology before reusing it on
 another board. Host networking also works where Docker bridge forwarding is
 disabled. No GPU devices or privileged container are needed.
+The tested P1 KV budget is 256 MiB. Keep `VLLM_CPU_KVCACHE_SPACE` unset: this
+deprecated GiB environment setting overrides `--kv-cache-memory-bytes` in the
+CPU platform configuration. The launcher removes an empty inherited value.
 
 ## Execution policy
 
