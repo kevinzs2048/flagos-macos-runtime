@@ -1,0 +1,51 @@
+#!/bin/sh
+set -eu
+SELF=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+ROOT=$(CDPATH= cd -- "$SELF/.." && pwd)
+PROFILE=${FLAGOS_PROFILE:-35b}
+if [ "${1:-}" = --profile ]; then
+  PROFILE=$2
+  shift 2
+fi
+case "$PROFILE" in 1b|35b) ;; *) echo 'profile must be 1b or 35b' >&2; exit 2 ;; esac
+if [ "$(uname -s)" = Darwin ]; then
+  PYROOT="$ROOT/python"
+  export PYTHONHOME="$PYROOT"
+  export TRITON_LOCAL_LIBOMP_PATH="$ROOT"
+  export GLOO_SOCKET_IFNAME=lo0
+else
+  PYROOT="$ROOT/venv"
+  unset PYTHONHOME
+  export GLOO_SOCKET_IFNAME=lo
+  if [ -f "$ROOT/lib/libtcmalloc_minimal.so.4" ]; then
+    export LD_PRELOAD="$ROOT/lib/libtcmalloc_minimal.so.4"
+  fi
+fi
+SITE="$PYROOT/lib/python3.11/site-packages"
+unset FLAGGEMS_ARM_NATIVE_LIBRARY FLAGGEMS_ARM_SILU_LIBRARY FLAGGEMS_ARM_SILU_BITCODE
+unset MINICPM_PLUGIN_ROOT
+export TRITON_BACKENDS_IN_TREE=1
+export TRITON_CPU_BACKEND=1
+export FLAGOS_RUNTIME_ROOT="$ROOT"
+export PYTHONPATH="$SITE"
+export PYTHONNOUSERSITE=1
+export PYTHONDONTWRITEBYTECODE=1
+export LD_LIBRARY_PATH="$SITE/torch/lib:$SITE/triton/_C:$ROOT/lib:/usr/local/lib"
+export DYLD_LIBRARY_PATH="$ROOT/lib:$PYROOT/lib:$SITE/torch/lib:$SITE/triton/_C"
+export PATH="/usr/bin:/bin:/usr/sbin:/sbin:$PYROOT/bin${PATH:+:$PATH}"
+export VLLM_HOST_IP=${VLLM_HOST_IP:-127.0.0.1}
+export FLAGOS_CACHE_DIR=${FLAGOS_CACHE_DIR:-"$ROOT/cache"}
+mkdir -p "$FLAGOS_CACHE_DIR/tmp" "$FLAGOS_CACHE_DIR/triton" "$FLAGOS_CACHE_DIR/torch" "$FLAGOS_CACHE_DIR/generic"
+export TMPDIR="$FLAGOS_CACHE_DIR/tmp"
+export TRITON_CACHE_DIR="$FLAGOS_CACHE_DIR/triton"
+export TORCH_EXTENSIONS_DIR="$FLAGOS_CACHE_DIR/torch"
+export XDG_CACHE_HOME="$FLAGOS_CACHE_DIR/generic"
+export TORCHINDUCTOR_CACHE_DIR="$FLAGOS_CACHE_DIR/inductor"
+export VLLM_CACHE_ROOT="$FLAGOS_CACHE_DIR/vllm"
+export FLAGOS_FONT_PATH="$ROOT/share/fonts/DejaVuSans.ttf"
+if [ "$PROFILE" = 35b ]; then
+  export MINICPM_EXPERT_MMAP_DIR=${MINICPM_EXPERT_MMAP_DIR:-"$FLAGOS_CACHE_DIR/experts-35b"}
+fi
+# Model/machine policy only; all model and operator implementation is packaged.
+. "$ROOT/share/flagos-minicpmv47/profiles/$PROFILE.env"
+exec "$PYROOT/bin/python3.11" "$@"

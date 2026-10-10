@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "version": "0.3.0-minicpmv47.1",
+  "sources": [
+    {
+      "repo": "kevinzs2048/FlagGems",
+      "branch": "minicpm-v47-arm-triton-tle-20261011",
+      "head": "ae1a81c716445ff71d0a8b2a979fa9ded6f3d2c7",
+      "base": "bfc6c49d2c4d06e5deac9784f203730c8372a84a",
+      "commits": 14
+    },
+    {
+      "repo": "kevinzs2048/flagtree-cpu",
+      "branch": "minicpm-v47-arm-triton-tle-20261011",
+      "head": "36133df9540cdd9eb5b09209ee41ce1697b27126",
+      "base": "2c35990a30e96665f8f9b5e158562288b4011048",
+      "commits": 5
+    },
+    {
+      "repo": "kevinzs2048/vllm-plugin-FL",
+      "branch": "minicpm-v47-arm-triton-tle-20261011",
+      "head": "f0de702335902facfffe625c0690f7a3df7f617d",
+      "base": "cf5d1e3998d414149417a1b0de448ecedddef85b",
+      "commits": 4
+    }
+  ],
+  "dependencies": {
+    "vllm": "0.24.0+cpu",
+    "torch": "2.11.0",
+    "transformers": "5.15.1",
+    "cpu_base_image_id": "sha256:3562f81ea6d461afa88fa005d97eacee7f7a2bf982797779996ccdca9ad02a38",
+    "policy": "Reuse verified runtime dependencies; record native artifacts in staging manifest"
+  },
+  "models": [
+    "MiniCPM-V-4.7-35B-A3B W4A8 G32, output head W8A8",
+    "MiniCPM-V-4.7-1B W8A8"
+  ],
+  "weights_included": false
+}

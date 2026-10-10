@@ -1,5 +1,9 @@
 # FlagOS macOS W4A8 Runtime
 
+MiniCPM V4.7 (35B W4A8 G32 and 1B W8A8), vLLM 0.24, and Cix P1 Docker
+packaging are documented in [minicpmv47/README.md](minicpmv47/README.md).
+The instructions below describe the earlier Qwen release.
+
 Native Apple M5 Pro Runtime for Qwen3.8-27B W4A8 G128 inference with the
 standard vLLM CLI. It packages the validated Python environment, vLLM 0.20.2,
 Triton CPU, FlagGems, vLLM-Plugin-FL, libtriton_jit and the required native

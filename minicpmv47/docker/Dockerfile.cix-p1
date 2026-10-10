@@ -1,0 +1,38 @@
+# Existing CPU base supplies CPython 3.11.2, system libraries and GCC headers.
+# All Python/Torch/vLLM/component imports use the verified replacement runtime.
+ARG BASE_IMAGE=minicpm5-2.6b-cix-p1-vllm:0.24.0-cix-highperf-v18-exact-20260904
+FROM ${BASE_IMAGE}
+ARG FLAGGEMS_COMMIT
+ARG FLAGTREE_COMMIT
+ARG PLUGIN_COMMIT
+LABEL org.opencontainers.image.title="FlagOS MiniCPM V4.7 Cix P1" \
+      org.opencontainers.image.version="0.3.0-minicpmv47.1" \
+      ai.flagos.flaggems.commit=$FLAGGEMS_COMMIT \
+      ai.flagos.flagtree.commit=$FLAGTREE_COMMIT \
+      ai.flagos.plugin.commit=$PLUGIN_COMMIT
+COPY runtime/ /opt/flagos-runtime/
+# Clear experiment-specific defaults inherited from the older CPU base.
+# The packaged profiles provide the validated defaults; docker run -e can
+# still override them explicitly.
+ENV FL_CPU_UNIPROC="" TRITON_CPU_BACKEND="" FLAGGEMS_ARM_Q4_STRICT="" \
+    FLAGGEMS_FALLBACK_MODE="" OMP_WAIT_POLICY="" VLLM_CPU_KVCACHE_SPACE="" \
+    FLAGGEMS_KERNEL_COVERAGE_FILE="" FLAGGEMS_CIX_P1_KAI="" \
+    FLAGGEMS_CIX_KAI_BUILDER="" TRITON_KLEIDIAI_CACHE_DIR="" \
+    OMP_NUM_THREADS="" FLAGGEMS_CIX_P1_KAI_OUT_OP="" \
+    FLAGGEMS_CIX_P1_KAI_PACKED_SWIGLU="" FLAGGEMS_CIX_P1_KAI_FUSED_MLP="" \
+    FL_W4A8_SERIAL_M1_PACK="" FLAGGEMS_CIX_P1_W8_NATIVE="" \
+    FLAGGEMS_CIX_P1_W8_FUSED_SWIGLU="" FLAGGEMS_CIX_P1_W8_FUSED_MLP="" \
+    FLAGGEMS_CIX_P1_W8_DECODE_W4_SHADOW="" FLAGGEMS_CIX_P1_W8_NATIVE_LIBRARY="" \
+    FLAGGEMS_CIX_P1_W8_NATIVE_OP_LIBRARY="" FLAGGEMS_CIX_P1_W8_LIBRARY="" \
+    FLAGGEMS_CIX_P1_W8_SHAPE_STEAL="" FLAGGEMS_W8_STEAL_CHUNK="" \
+    FL_INT8_LMHEAD="" FLAGGEMS_VLLM_FAST_APPLY="" VLLM_CPU_ATTN_SPLIT_KV="" \
+    KMP_BLOCKTIME="" VLLM_CACHE_ROOT="" VLLM_FL_CIX_P1_RMS_LIBRARY="" \
+    VLLM_FL_CIX_P1_FUSED_ATTN_LIBRARY="" VLLM_FL_CIX_P1_FUSED_QKV_ROPE_ATTN="" \
+    VLLM_FL_CIX_P1_FORWARD_KV_UPDATE="" VLLM_FL_CIX_P1_DIRECT_ATTN="" \
+    VLLM_FL_CIX_P1_CACHE_KV_VIEWS="" VLLM_FL_CIX_P1_FAST_ATTN_DISPATCH=""
+ENV FLAGOS_PROFILE=35b FLAGOS_CACHE_DIR=/cache \
+    PATH=/opt/flagos-runtime/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+WORKDIR /opt/flagos-runtime
+EXPOSE 8000
+ENTRYPOINT ["/opt/flagos-runtime/bin/flagos-vllm"]
+CMD ["--help"]
