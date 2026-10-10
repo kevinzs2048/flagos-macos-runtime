@@ -30,7 +30,8 @@ ENV FL_CPU_UNIPROC="" TRITON_CPU_BACKEND="" FLAGGEMS_ARM_Q4_STRICT="" \
     VLLM_FL_CIX_P1_FUSED_ATTN_LIBRARY="" VLLM_FL_CIX_P1_FUSED_QKV_ROPE_ATTN="" \
     VLLM_FL_CIX_P1_FORWARD_KV_UPDATE="" VLLM_FL_CIX_P1_DIRECT_ATTN="" \
     VLLM_FL_CIX_P1_CACHE_KV_VIEWS="" VLLM_FL_CIX_P1_FAST_ATTN_DISPATCH=""
-ENV FLAGOS_PROFILE=35b FLAGOS_CACHE_DIR=/cache \
+ENV CC=/usr/bin/gcc CXX=/usr/bin/g++ \
+    FLAGOS_PROFILE=35b FLAGOS_CACHE_DIR=/cache \
     PATH=/opt/flagos-runtime/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 WORKDIR /opt/flagos-runtime
 EXPOSE 8000

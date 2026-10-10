@@ -117,6 +117,10 @@ The Linux Docker base is the existing CPU image identified in the lock; staging
 replaces its Python packages with the tested versions and clears obsolete base
 experiment flags. The exported image is independently loadable without that
 base image being preinstalled.
+JIT launchers use GCC on P1, matching the verified host runtime and Torch's
+GNU OpenMP. Inheriting the earlier base image's Clang configuration can load a
+second OpenMP runtime and give different thread behavior. Use a fresh kernel
+cache when changing compiler selection.
 
 ```sh
 python3 minicpmv47/scripts/stage_runtime.py \
