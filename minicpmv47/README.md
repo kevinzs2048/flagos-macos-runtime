@@ -96,8 +96,9 @@ four decode workers occupy all four big-core frequency policies; the 35B
 profile spreads its six decode workers. The 1B profile also keeps
 warm allocator pages with `MIMALLOC_PURGE_DELAY=-1` and
 `TCMALLOC_RELEASE_RATE=0`. Torch tensor storage uses embedded mimalloc, so
-TCMalloc alone does not control tensor page release. These memory defaults do
-not apply to the much larger 35B model. No profile changes host governors.
+TCMalloc alone does not control tensor page release. The 35B model uses
+`MIMALLOC_PURGE_DELAY=100` milliseconds with `TCMALLOC_RELEASE_RATE=0`, keeping
+explicit startup/prefill cleanup enabled. No profile changes host governors.
 
 ## Validate an extracted package
 

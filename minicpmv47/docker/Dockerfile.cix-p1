@@ -7,7 +7,7 @@ ARG FLAGGEMS_COMMIT
 ARG FLAGTREE_COMMIT
 ARG PLUGIN_COMMIT
 LABEL org.opencontainers.image.title="FlagOS MiniCPM V4.7 Cix P1" \
-      org.opencontainers.image.version="0.3.1-minicpmv47.2" \
+      org.opencontainers.image.version="0.3.1-minicpmv47.3" \
       ai.flagos.flaggems.commit=$FLAGGEMS_COMMIT \
       ai.flagos.flagtree.commit=$FLAGTREE_COMMIT \
       ai.flagos.plugin.commit=$PLUGIN_COMMIT

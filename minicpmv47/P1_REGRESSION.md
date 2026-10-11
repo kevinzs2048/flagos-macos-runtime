@@ -49,7 +49,7 @@ can materially perturb timings.
 
 ## Rejected shortcuts
 
-Changing the governor alone, retaining only one allocator, reducing
+In the 1B experiments, changing the governor alone, retaining only one allocator, reducing
 GOMP_SPINCOUNT to 1000/100000, or reporting only three favorable requests did
 not provide a satisfactory fix. Reducing the spin count worsened decode;
 the qualified default remains 1000000. Governor experiments save and restore
@@ -97,6 +97,28 @@ total93.87. CPPC feedback during both fast and slow prefills remained near
 the requested 2.6/2.3/2.2/2.5 GHz policy maxima. Frequency alone is therefore
 not an adequate explanation of the remaining variation, and no governor
 change is shipped as an implicit requirement.
+
+## 35B memory-reclamation control
+
+The first rebuilt image still failed performance qualification: five warmed
+35B requests measured PP81.92/TG8.04/total29.00, despite the same threads and
+token IDs as the earlier PP99.18/TG8.70 candidate. Running the old diagnostic
+harness in that same image measured PP81.40/TG8.10, excluding the newer
+validation script as an adequate explanation.
+
+The slow image requests accumulated roughly 604,000–649,000 minor page faults
+each. A bounded mimalloc purge delay of 100 ms plus TCMalloc release rate 0
+measured PP111.59/TG8.645/total33.20 in five warmed requests. Their minor-fault
+deltas were 48,124, 7,921, 8,860, 11,254 and 14,671; peak RSS was 21.67 GiB.
+All benchmark and text/image/OCR token IDs matched the original reference.
+Explicit startup/prefill cleanup remains enabled. This is strong evidence
+for memory reclamation being a material contributor, without attributing the
+entire effect to either allocator individually. No arithmetic kernel changed.
+
+The 35B profile now records that bounded delay and TCMalloc rate as defaults;
+the 1B profile uses indefinite mimalloc retention for its smaller working set.
+The corrected defaults still require validation in the rebuilt image. Earlier
+failed and favorable reports are retained, rather than overwritten.
 
 ## Qualification status
 
