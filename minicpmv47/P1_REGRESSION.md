@@ -117,15 +117,90 @@ entire effect to either allocator individually. No arithmetic kernel changed.
 
 The 35B profile now records that bounded delay and TCMalloc rate as defaults;
 the 1B profile uses indefinite mimalloc retention for its smaller working set.
-The corrected defaults still require validation in the rebuilt image. Earlier
+The corrected defaults were validated in the rebuilt image as reported below. Earlier
 failed and favorable reports are retained, rather than overwritten.
 
 ## Qualification status
 
-Final policy selection and image requalification are in progress. Do not
-substitute favorable intermediate medians for final image results. Raw reports
-are retained under the distribution's `audit/p1-regression-20261011` and P1
-`artifacts` directories. No universal 0.5% performance-equivalence claim is made.
+The corrected default image (ID
+`sha256:72d655d6bf308074aa53374ae32e7f1596d0493b81c1960df0209994bc54816b`)
+passed twelve warmed 35B requests: PP110.84/TG8.647/total33.176. Ranges were
+PP95.90–113.16, TG8.510–8.681 and total31.59–33.28. The first measured request
+remains included. Minor-fault deltas were 32,398 for that request, then
+7,382–10,462 per request; peak RSS was 21.61 GiB. Five 1B requests measured
+PP632.88/TG21.383/total94.855, with PP391.91–651.92, TG21.316–21.418 and
+peak RSS6.87 GiB. The prefill variation also observed on the host remains a
+measurement limitation, not a claim of zero latency variation.
+
+Both checkpoints passed text/image/OCR and exact benchmark token comparisons,
+package-only import checks, fresh-cache native/Raw/ordinary Triton tests, and
+the packaged 1B OpenAI HTTP endpoint. All component arithmetic source commits
+and native library hashes are unchanged. The interpreter snapshot, profile
+and measurement protocol changes are explicit and separate from arithmetic.
+
+The frozen interpreter candidate, retested after the first final image's slow
+run, measured PP99.76/TG8.57/total32.08. This reinforces the need to control
+allocator/initialization state rather than inferring a compiler arithmetic
+regression from one timing run. The allocator combination is demonstrated to
+remove the sustained PP81 behavior in the corrected image; the precise
+individual contributions of the two allocator settings are not separately
+claimed.
+
+## Sequential paired controls: acceptance remains open for 1B
+
+Twenty measured pairs under schedutil, with both models resident and generations
+strictly sequential, gave container PP448.54/TG20.855/total88.518 versus host
+PP636.80/TG20.897/total92.958. The container PP median was 29.56% lower and
+total 4.78% lower. This fails performance acceptance despite the favorable
+single-instance figures above. Paired co-residency and single-instance results
+are distinct operating conditions; neither result is discarded.
+
+A subsequent eight-pair diagnostic added light thread-switch timing and an
+external CPU sampler. The slow-prefill distribution flipped toward the host:
+container PP631.63 versus host552.17. Direct phase thread setters took at most
+47.8 microseconds in the container and 11.1 microseconds in the host. The idle
+peer consumed approximately 0–0.01 CPU-seconds during the other's prefill;
+cgroup ancestors had no quota or throttling. A slow sampled container prefill
+spent 1.44 wall seconds with main-thread runtime0.851 seconds and runqueue wait
+0.052 seconds; the remaining interval was blocked time, consistent with the
+sampled parallel barriers. These measurements exclude direct setter cost and
+idle-peer busy spinning as adequate explanations, but do not establish a
+particular blocked-time cause. Instrumented timings are diagnostic only.
+
+An uninstrumented twelve-pair run with all big-core governors temporarily set
+to performance gave container PP629.46/TG20.876/total92.855 versus host
+PP548.69/TG20.892/total90.725. Container PP ranged440.96–635.09;
+host PP still ranged411.90–647.32. All token IDs were identical. Governors were
+saved and restored in a finally block. The final container request followed
+the host's final request and overlapped possible host teardown, so a subsequent
+control must keep both models alive until all timed requests are complete. This run does not justify describing
+Docker as inherently slower, nor does it establish frequency as the sole cause:
+previous fixed-performance runs and the host continue to show variation.
+A following hardware-counter/per-thread diagnostic reproduced alternating
+container PP349.6–366.8 after the host and PP529.7–582.1 on consecutive
+container requests; host prefills stayed626.3–636.8 until the teardown-overlap
+last request. Continuous cpuinfo/scaling frequency reads showed policies6/8/10
+falling toward1.1 GHz during the slow container requests, while host fast
+prefills stayed at2.3/2.2/2.5 GHz. Slow requests also retired more instructions
+and cycles, consistent with the sampled barrier work; generic cache-event
+counts include waiting/other work and are not isolated matrix-cache misses.
+This continuous trace is stronger evidence than earlier sparse/CPPC feedback
+snapshots: frequency is a demonstrated material contributor, but residual
+fixed-performance host variation still prevents a sole-cause claim.
+
+A process/thread utilization-clamp intervention is being tested with governors
+remaining schedutil. Both models are now held resident until every measured
+request finishes, avoiding peer teardown contamination. The test preserves
+scheduler class and nice level, changes only the explicit utilization minimum,
+and records before/after attributes. This is experimental, not yet a shipping
+profile or source change.
+
+The corrected image's offline archive was exported and reloaded successfully,
+with SHA256 `37a126ed09b2e77c5a226131f858f74da01a585b2fc831c8fef6c09300ca1a66`.
+It remains a candidate rather than an accepted replacement release while the
+1B discrepancy is investigated. Raw reports are retained under the distribution's
+`audit/p1-regression-20261011` and P1 `artifacts` directories. No universal 0.5%
+performance-equivalence claim is made.
 
 Allocator implementation references:
 [Torch CPU allocator](https://github.com/pytorch/pytorch/blob/70d99e998b4955e0049d13a98d77ae1b14db1f45/c10/core/impl/alloc_cpu.cpp),
