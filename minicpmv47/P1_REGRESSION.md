@@ -188,17 +188,60 @@ This continuous trace is stronger evidence than earlier sparse/CPPC feedback
 snapshots: frequency is a demonstrated material contributor, but residual
 fixed-performance host variation still prevents a sole-cause claim.
 
-A process/thread utilization-clamp intervention is being tested with governors
-remaining schedutil. Both models are now held resident until every measured
-request finishes, avoiding peer teardown contamination. The test preserves
-scheduler class and nice level, changes only the explicit utilization minimum,
-and records before/after attributes. This is experimental, not yet a shipping
-profile or source change.
+An eight-pair process/thread utilization-clamp intervention retained schedutil
+and held both models resident until every request finished. Before/after
+attributes confirmed effective minima1024, unchanged class/nice, including
+new OpenMP workers. The container measured PP538.38/TG21.077/total91.197 versus
+hostPP640.12/TG20.465/total91.278: total difference-0.09%, but PP-15.89% still
+fails acceptance. Continuous frequency samples still fell below policy maxima
+in slow container prefills. Both host and default-seccomp/nonroot container
+self-clamp calls succeeded without extra capabilities. This intervention is
+not shipped: accepting a hint does not establish a stable frequency or PP
+bound. A following twelve-pair direct minimum-frequency control kept both models
+resident until all measurements finished. Container PP641.22 versus host641.72
+reduced the PP median gap to0.08%. TG was20.956 versus21.213 (-1.21%) and
+total92.815 versus93.496 (-0.73%); no whole-model0.5% equivalence is claimed.
+The host still showed slow prefills428–454 at full sampled frequencies,
+confirming that DVFS is not the sole source of latency variation.
+
+Single-instance twelve-request controls measured 1B PP649.39/TG21.404/total95.062
+with ranges PP422.36–656.54/TG21.328–21.496/total89.82–95.69 and peakRSS6.89GiB.
+35B measured111.41/8.536/32.895, below the default-policy35B decode result8.647;
+the frequency floor is therefore not recommended as a common35B/1B default.
+All token IDs and text/image/OCR outputs matched the prior corrected image.
+The matched single-instance host1B run is complete: twelve warmed requests
+measured PP646.62/TG20.990/total93.450. Container changes were +0.43% PP,
++1.97% TG and +1.73% total. All benchmark and four functional-case token IDs
+matched. Host PP ranged426.78–651.49, compared with container422.36–656.54:
+the shared prefill tails remain, but this normal single-instance control did
+not show a container performance regression. This does not erase the earlier
+co-resident control's negative result or prove a universal latency bound.
+
+The frequency controller now lives in `minicpmv47/p1_performance_run.py` as
+explicit host deployment tooling. It preserves scheduler/governor settings,
+records a journal before applying the floor, serializes controllers, and
+restores floors after failure or SIGTERM; explicit journal recovery is also
+available. Live command-failure, signal and explicit-restore tests passed.
+The first experimental controller read restored sysfs values too early and
+reported a failed assertion: the policy readback still showed the old maximum
+immediately after writing, then settled to the original800MHz floor. That raw
+failed report is preserved; a later readback confirmed actual restoration.
+The production controller polls applied/restored values with a bounded timeout.
+A first host-control attempt failed before model loading because its validation
+script had not been copied; its failure journal confirmed restoration. It was
+restarted with a new journal after copying the script. No timed samples were
+removed or overwritten.
+
+The light frequency observer originally lacked permission for cpuinfo_cur_freq;
+its traceback is preserved. It was restarted with read permission under a new
+report filename; benchmark generations were not restarted or discarded.
 
 The corrected image's offline archive was exported and reloaded successfully,
 with SHA256 `37a126ed09b2e77c5a226131f858f74da01a585b2fc831c8fef6c09300ca1a66`.
-It remains a candidate rather than an accepted replacement release while the
-1B discrepancy is investigated. Raw reports are retained under the distribution's
+It is qualified for the documented single-instance settings: default schedutil
+for35B and the explicit host frequency-floor controller for the controlled1B
+measurements. Co-resident alternating-instance performance and shared prefill
+tails remain limitations, rather than claims of uniform per-request latency. Raw reports are retained under the distribution's
 `audit/p1-regression-20261011` and P1 `artifacts` directories. No universal 0.5%
 performance-equivalence claim is made.
 

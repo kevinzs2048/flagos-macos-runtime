@@ -36,6 +36,11 @@ report = dict(complete=False, scope='Packaged runtime full-model validation',
               env={k:v for k,v in os.environ.items() if k.startswith(('FL_', 'FLAGGEMS_', 'MINICPM_', 'OMP_', 'VLLM_CPU_', 'GOMP_', 'KMP_', 'MIMALLOC_', 'TCMALLOC_'))})
 report['cpu_governors'] = {str(path):path.read_text().strip()
     for path in Path('/sys/devices/system/cpu/cpufreq').glob('policy*/scaling_governor')}
+report['cpu_frequency_policy'] = {
+    str(path): {name: (path/name).read_text().strip()
+                for name in ('related_cpus', 'scaling_min_freq', 'scaling_max_freq', 'scaling_governor')
+                if (path/name).exists()}
+    for path in Path('/sys/devices/system/cpu/cpufreq').glob('policy*')}
 if a.standalone:
     report['scope'] = 'Latest FlagGems and vllm-plugin-FL submission sources with unchanged validated FlagTree CPU compiler; deployed Python/Torch/vLLM supply dependencies only'
 

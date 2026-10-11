@@ -100,6 +100,26 @@ TCMalloc alone does not control tensor page release. The 35B model uses
 `MIMALLOC_PURGE_DELAY=100` milliseconds with `TCMALLOC_RELEASE_RATE=0`, keeping
 explicit startup/prefill cleanup enabled. No profile changes host governors.
 
+For controlled 1B benchmarks on this P1, the host can explicitly hold each
+big-core frequency policy's minimum at its existing maximum while a command
+runs. This reduced the observed prefill gap; residual timing variation is
+documented in the regression report. The host tool preserves the governor,
+records the original settings, and restores them after command failure or
+SIGINT/SIGTERM. It waits for asynchronous sysfs readback to settle.
+
+```sh
+sudo python3 minicpmv47/p1_performance_run.py \
+  --state /absolute/path/to/new-frequency-journal.json -- \
+  docker run ...
+```
+
+Run this tool on the Linux host. The container needs no extra capabilities.
+If the controller is killed ungracefully, the same journal can be restored with
+`sudo python3 minicpmv47/p1_performance_run.py --state /path/to/journal.json --restore`.
+The 35B control did not benefit from this frequency floor; retain its default
+host policy. This host utility is deployment/benchmark tooling, not a model
+adapter or an arithmetic kernel.
+
 ## Validate an extracted package
 
 Use a fresh writable cache and a new report filename. Reports are flushed and
