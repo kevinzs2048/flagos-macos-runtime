@@ -7,6 +7,8 @@ processor adaptation lives in the plugin; operators live in FlagGems.
 
 Package qualification and remaining performance limitations are recorded in
 [VALIDATION.md](VALIDATION.md).
+The P1 investigation and control experiments are documented in
+[P1_REGRESSION.md](P1_REGRESSION.md).
 
 Supported checkpoints:
 
@@ -48,12 +50,12 @@ runtime library path is required.
 ## Cix P1 Linux arm64 Docker image
 
 ```sh
-gzip -dc flagos-minicpmv47-cix-p1-20261011.docker.tar.gz | sudo docker load
+gzip -dc flagos-minicpmv47-cix-p1-0.3.1-20261011.docker.tar.gz | sudo docker load
 sudo docker run --rm --network host --cpuset-cpus 0,1,6-11 \
   -v /absolute/path/to/35b-W4A8-G32:/model:ro \
   -v /absolute/path/to/writable-cache:/cache \
   -e FLAGOS_PROFILE=35b \
-  flagos/minicpm-v47-cix-p1:0.3.0-20261011 \
+  flagos/minicpm-v47-cix-p1:0.3.1-20261011 \
   serve /model --trust-remote-code --dtype bfloat16 --max-model-len 4096 \
   --max-num-batched-tokens 512 --max-num-seqs 1 \
   --worker-cls vllm_fl.worker.cpu_phase_worker.CPUPhaseWorker \
@@ -89,6 +91,14 @@ TLE calls retain the C++ arithmetic implementation; host preparation, weight
 packing, and framework operations are not all Triton kernels. No universal
 whole-model 0.5% regression claim is made.
 
+On the tested P1, both profiles use `OMP_PROC_BIND=spread`. The 1B profile's
+four decode workers occupy all four big-core frequency policies; the 35B
+profile spreads its six decode workers. The 1B profile also keeps
+warm allocator pages with `MIMALLOC_PURGE_DELAY=-1` and
+`TCMALLOC_RELEASE_RATE=0`. Torch tensor storage uses embedded mimalloc, so
+TCMalloc alone does not control tensor page release. These memory defaults do
+not apply to the much larger 35B model. No profile changes host governors.
+
 ## Validate an extracted package
 
 Use a fresh writable cache and a new report filename. Reports are flushed and
@@ -111,6 +121,10 @@ mount a writable results directory. Tests check native/Raw/Triton operator
 results, package-only imports, text, image and OCR generation, and PP512/TG128.
 TG128 is `127 / (last-token time - first-token time)`. Total is
 `640 / (prefill time + 127 decode intervals)` for one combined request.
+The current harness measures retained warm heap state by default. Use
+`--heap-policy trim` to reproduce the earlier explicit cleanup before every
+benchmark request; do not silently mix these protocols. It records allocator
+and OpenMP settings, interpreter provenance, governors, medians and ranges.
 
 ## Build policy and provenance
 
@@ -127,6 +141,10 @@ JIT launchers use GCC on P1, matching the verified host runtime and Torch's
 GNU OpenMP. Inheriting the earlier base image's Clang configuration can load a
 second OpenMP runtime and give different thread behavior. Use a fresh kernel
 cache when changing compiler selection.
+Linux staging also requires a CPython snapshot created with the interpreter
+used for host qualification. Python version alone is insufficient: the older
+Docker base's custom CPython 3.11.2 build differed from the qualified host build.
+The packaged launcher isolates the snapshot's stdlib, headers, and library paths.
 
 ```sh
 python3 minicpmv47/scripts/stage_runtime.py \
@@ -134,7 +152,11 @@ python3 minicpmv47/scripts/stage_runtime.py \
   --installed /verified/installed-prefix --wheels /verified/two-wheels \
   --cpu-tle-source /locked/flagtree/third_party/cpu/language/cpu/tle_ops.py \
   --output /new/staging/runtime
-# Linux also requires --vllm /verified/vllm-package-directory.
+# Linux: run this with the qualified host interpreter first:
+/verified/host/python3.11 minicpmv47/scripts/snapshot_cpython.py \
+  --output /new/qualified-cpython
+# Linux staging also requires --vllm /verified/vllm-package-directory
+# and --cpython /new/qualified-cpython.
 # macOS: relocate and ad-hoc sign the staged Mach-O files, then validate.
 python3 scripts/relocate_macho.py /new/staging/runtime
 python3 minicpmv47/scripts/export_macos.py --runtime /new/staging/runtime \
@@ -144,7 +166,7 @@ sudo docker build --network host \
   --build-arg FLAGGEMS_COMMIT=ae1a81c716445ff71d0a8b2a979fa9ded6f3d2c7 \
   --build-arg FLAGTREE_COMMIT=36133df9540cdd9eb5b09209ee41ce1697b27126 \
   --build-arg PLUGIN_COMMIT=f0de702335902facfffe625c0690f7a3df7f617d \
-  -t flagos/minicpm-v47-cix-p1:0.3.0-20261011 /new/staging
+  -t flagos/minicpm-v47-cix-p1:0.3.1-20261011 /new/staging
 ```
 
 The legacy root build scripts and release lock target an earlier runtime; they

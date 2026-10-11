@@ -6,7 +6,10 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import platform
+import resource
 import statistics
+import sys
 import time
 
 p = argparse.ArgumentParser()
@@ -19,12 +22,20 @@ p.add_argument('--standalone', action='store_true')
 p.add_argument('--gems-source', type=Path)
 p.add_argument('--package-site', type=Path)
 p.add_argument('--plugin-source', type=Path)
+p.add_argument('--heap-policy', choices=('retained', 'trim'), default='retained',
+               help='Keep warm allocator pages, or release unused pages before every benchmark request')
 a = p.parse_args()
+if a.repeats < 1:
+    p.error('--repeats must be positive')
 if a.output.exists():
     raise RuntimeError(f'Refusing to replace existing report {a.output}')
 report = dict(complete=False, scope='Packaged runtime full-model validation',
               model=a.model, worker=a.worker, pid=os.getpid(), cases=[], runs=[],
-              env={k:v for k,v in os.environ.items() if k.startswith(('FL_', 'FLAGGEMS_', 'MINICPM_', 'OMP_', 'VLLM_CPU_'))})
+              heap_policy=a.heap_policy,
+              python=dict(executable=sys.executable, version=sys.version, compiler=platform.python_compiler()),
+              env={k:v for k,v in os.environ.items() if k.startswith(('FL_', 'FLAGGEMS_', 'MINICPM_', 'OMP_', 'VLLM_CPU_', 'GOMP_', 'KMP_', 'MIMALLOC_', 'TCMALLOC_'))})
+report['cpu_governors'] = {str(path):path.read_text().strip()
+    for path in Path('/sys/devices/system/cpu/cpufreq').glob('policy*/scaling_governor')}
 if a.standalone:
     report['scope'] = 'Latest FlagGems and vllm-plugin-FL submission sources with unchanged validated FlagTree CPU compiler; deployed Python/Torch/vLLM supply dependencies only'
 
@@ -103,7 +114,8 @@ try:
     assert len(ids) == 512
     reference = None
     for repeat in range(a.repeats + 1):
-        StreamedExperts._release_unused_pages()
+        if a.heap_policy == 'trim':
+            StreamedExperts._release_unused_pages()
         start = time.perf_counter()
         out = llm.generate([dict(prompt_token_ids=ids)], SamplingParams(temperature=0, max_tokens=128,min_tokens=128,ignore_eos=True),use_tqdm=False)[0]
         wall = time.perf_counter()-start
@@ -117,6 +129,9 @@ try:
                    prefill_seconds=metrics.first_token_ts-metrics.scheduled_ts,
                    decode_seconds=metrics.last_token_ts-metrics.first_token_ts,
                    execution_seconds=metrics.last_token_ts-metrics.scheduled_ts)
+        usage = resource.getrusage(resource.RUSAGE_SELF)
+        row.update(minor_faults=usage.ru_minflt,
+                   peak_rss_bytes=usage.ru_maxrss * (1 if sys.platform == 'darwin' else 1024))
         row.update(pp512=512/row['prefill_seconds'],tg128=127/row['decode_seconds'],
                    total=640/row['execution_seconds'],total_definition='640/(first-token prefill time + 127 decode intervals)',
                    phase_calls=dict(worker.thread_calls),observed_threads=dict(worker.observed_threads))
@@ -126,6 +141,8 @@ try:
         assert row['tokens_equal'], 'Tokens changed between repetitions'
     rows = [row for row in report['runs'] if not row['warmup']]
     report['medians'] = {key:statistics.median(row[key] for row in rows) for key in ('pp512','tg128','total','execution_seconds','wall_seconds')}
+    report['ranges'] = {key:dict(min=min(row[key] for row in rows), max=max(row[key] for row in rows))
+                        for key in ('pp512','tg128','total')}
     report.update(complete=True,passed=True)
     save()
 except BaseException as error:

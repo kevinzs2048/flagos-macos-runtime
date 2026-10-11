@@ -1,4 +1,5 @@
-# Existing CPU base supplies CPython 3.11.2, system libraries and GCC headers.
+# Existing CPU base supplies system libraries and GCC headers. The runtime
+# includes the host-qualified CPython snapshot rather than its custom Python.
 # All Python/Torch/vLLM/component imports use the verified replacement runtime.
 ARG BASE_IMAGE=minicpm5-2.6b-cix-p1-vllm:0.24.0-cix-highperf-v18-exact-20260904
 FROM ${BASE_IMAGE}
@@ -6,7 +7,7 @@ ARG FLAGGEMS_COMMIT
 ARG FLAGTREE_COMMIT
 ARG PLUGIN_COMMIT
 LABEL org.opencontainers.image.title="FlagOS MiniCPM V4.7 Cix P1" \
-      org.opencontainers.image.version="0.3.0-minicpmv47.1" \
+      org.opencontainers.image.version="0.3.1-minicpmv47.2" \
       ai.flagos.flaggems.commit=$FLAGGEMS_COMMIT \
       ai.flagos.flagtree.commit=$FLAGTREE_COMMIT \
       ai.flagos.plugin.commit=$PLUGIN_COMMIT

@@ -15,7 +15,11 @@ if [ "$(uname -s)" = Darwin ]; then
   export GLOO_SOCKET_IFNAME=lo0
 else
   PYROOT="$ROOT/venv"
-  unset PYTHONHOME
+  if [ -x "$ROOT/cpython/bin/python3.11" ]; then
+    export PYTHONHOME="$ROOT/cpython"
+  else
+    unset PYTHONHOME
+  fi
   # A present VLLM_CPU_KVCACHE_SPACE overrides the explicit CLI byte budget.
   # Remove the empty inherited base default rather than inventing a GiB value.
   if [ -z "${VLLM_CPU_KVCACHE_SPACE:-}" ]; then
@@ -35,7 +39,7 @@ export FLAGOS_RUNTIME_ROOT="$ROOT"
 export PYTHONPATH="$SITE"
 export PYTHONNOUSERSITE=1
 export PYTHONDONTWRITEBYTECODE=1
-export LD_LIBRARY_PATH="$SITE/torch/lib:$SITE/triton/_C:$ROOT/lib:/usr/local/lib"
+export LD_LIBRARY_PATH="$SITE/torch/lib:$SITE/triton/_C:$ROOT/lib:$ROOT/cpython/lib:/usr/local/lib"
 export DYLD_LIBRARY_PATH="$ROOT/lib:$PYROOT/lib:$SITE/torch/lib:$SITE/triton/_C"
 export PATH="/usr/bin:/bin:/usr/sbin:/sbin:$PYROOT/bin${PATH:+:$PATH}"
 export VLLM_HOST_IP=${VLLM_HOST_IP:-127.0.0.1}

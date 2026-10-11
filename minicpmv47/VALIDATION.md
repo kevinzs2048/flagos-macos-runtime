@@ -1,5 +1,13 @@
 # Package validation: 2026-10-11
 
+The table below records the original 0.3.0 artifacts. The 0.3.1 P1 correction
+is undergoing final image qualification; controlled candidate results and
+the investigation are in [P1_REGRESSION.md](P1_REGRESSION.md). In matched
+twelve-request controls, 1B container/host measured respectively
+PP647.25/640.66, TG21.39/21.43 and total94.68/95.14. A five-request 35B
+candidate measured PP99.18/TG8.70/total32.39. These are candidate results,
+not yet the final rebuilt image's release measurements.
+
 Both platforms passed native/CPU TLE/ordinary Triton operator checks, isolated
 package import checks, text/image/OCR generation for both checkpoints, and a
 1B OpenAI chat HTTP smoke test. Token IDs matched each platform's historical

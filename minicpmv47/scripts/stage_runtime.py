@@ -22,14 +22,17 @@ def main():
     parser.add_argument('--installed', type=Path, required=True)
     parser.add_argument('--wheels', type=Path, required=True)
     parser.add_argument('--vllm', type=Path)
+    parser.add_argument('--cpython', type=Path, help='Qualified Linux CPython snapshot')
     parser.add_argument('--cpu-tle-source', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
     recipe = Path(__file__).resolve().parents[1]
+    system = 'macos' if sys.platform == 'darwin' else 'cix-p1'
     if args.output.exists():
         raise RuntimeError('Refusing to overwrite a staged runtime')
+    if system == 'cix-p1' and (args.vllm is None or args.cpython is None):
+        raise RuntimeError('Linux requires materialized vLLM and a qualified CPython snapshot')
     copy_tree(args.runtime, args.output)
-    system = 'macos' if sys.platform == 'darwin' else 'cix-p1'
     python_root = args.output / ('python' if system == 'macos' else 'venv')
     site = python_root / 'lib/python3.11/site-packages'
     for name in ('flag_gems', 'vllm_fl', 'triton'):
@@ -66,12 +69,17 @@ def main():
     if system == 'cix-p1':
         if args.vllm is None:
             raise RuntimeError('Linux editable vLLM must be materialized explicitly')
+        if args.cpython is None:
+            raise RuntimeError('Linux requires the host-qualified CPython snapshot')
+        copy_tree(args.cpython, args.output / 'cpython')
+        python_version = json.loads((args.cpython / 'snapshot.json').read_text())['version'].split()[0]
         for name in ('python', 'python3', 'python3.11'):
             p = python_root / 'bin' / name
             p.unlink(missing_ok=True)
-            p.symlink_to('/usr/local/bin/python3.11')
+            p.symlink_to('../../cpython/bin/python3.11')
         (python_root / 'pyvenv.cfg').write_text(
-            'home = /usr/local/bin\ninclude-system-site-packages = false\nversion = 3.11.2\n')
+            'home = /opt/flagos-runtime/cpython/bin\ninclude-system-site-packages = false\n'
+            f'version = {python_version}\n')
         fonts = args.output / 'share/fonts'
         fonts.mkdir(parents=True, exist_ok=True)
         shutil.copy2('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', fonts)
@@ -110,6 +118,8 @@ def main():
                     sources=lock['sources'],
                     build_policy='Snapshot of verified Python/Torch/vLLM dependencies plus locked component sources and matched native/compiler artifacts; not a fresh from-source rebuild of all dependencies',
                     models_included=False, compiled_artifacts={})
+    if system == 'cix-p1':
+        manifest['cpython_snapshot'] = json.loads((args.output / 'cpython/snapshot.json').read_text())
     for p in [*(site / 'triton/_C').glob('*'), *(site / 'flag_gems/runtime/backend/_arm/lib').glob('*'),
               site / 'vllm/_C.abi3.so', site / 'torch/lib'/('libtorch_cpu.dylib' if system == 'macos' else 'libtorch_cpu.so')]:
         if p.is_file():

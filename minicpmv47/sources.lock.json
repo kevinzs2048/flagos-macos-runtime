@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "version": "0.3.0-minicpmv47.1",
+  "version": "0.3.1-minicpmv47.2",
   "sources": [
     {
       "repo": "kevinzs2048/FlagGems",
@@ -29,7 +29,13 @@
     "torch": "2.11.0",
     "transformers": "5.15.1",
     "cpu_base_image_id": "sha256:3562f81ea6d461afa88fa005d97eacee7f7a2bf982797779996ccdca9ad02a38",
-    "policy": "Reuse verified runtime dependencies; record native artifacts in staging manifest"
+    "policy": "Reuse verified runtime dependencies; record native artifacts in staging manifest",
+    "cix_p1_cpython": {
+      "version": "3.11.2",
+      "build": "Debian Apr 28 2025 GCC 12.2.0",
+      "executable_sha256": "9a070c8a36e16c152dae21b66aeb707f4d21b506c875e9b15edf4387fca7dcf8",
+      "policy": "Snapshot interpreter, stdlib, headers and shared library from qualified host; do not inherit custom Python from Docker base"
+    }
   },
   "models": [
     "MiniCPM-V-4.7-35B-A3B W4A8 G32, output head W8A8",

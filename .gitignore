@@ -8,3 +8,4 @@ artifacts/*
 SHA256SUMS
 install.sh.sha256
 *.log
+audit/
